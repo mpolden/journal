@@ -10,12 +10,13 @@ func date(year int, month time.Month, day int) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 }
 
-func TestParse(t *testing.T) {
+func TestReadFrom(t *testing.T) {
 	lines := `"01.02.2017";"01.02.2017";"Transaction 1";"1.337,00";"1.337,00";"";""
 "10.03.2017";"10.03.2017";"Transaction 2";"-42,00";"1.295,00";"";""
 "20.04.2017";"20.04.2017";"Transaction 3";"42,00";"1.337,00";"";""
 `
-	ts, err := Parse(strings.NewReader(lines))
+	var readFrom ReadFromFunc = ReadFrom
+	ts, err := readFrom(strings.NewReader(lines))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -18,9 +18,10 @@ const (
 
 var replacer = strings.NewReplacer(decimalSeparator, "", thousandSeparator, "")
 
-// Parser parses transactions from given reader
-type Parser func(io.Reader) ([]Transaction, error)
+// ReadFromFunc is the type of function that each bank's ReadFrom must satisfy.
+type ReadFromFunc func(r io.Reader) ([]Transaction, error)
 
+// Transaction contains details of a finanical transaction.
 type Transaction struct {
 	Time   time.Time
 	Text   string
@@ -46,7 +47,7 @@ func parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
-func Parse(r io.Reader) ([]Transaction, error) {
+func ReadFrom(r io.Reader) ([]Transaction, error) {
 	c := csv.NewReader(r)
 	c.Comma = ';'
 	var ts []Transaction

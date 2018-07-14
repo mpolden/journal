@@ -36,7 +36,7 @@ func parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
-func Parse(r io.Reader) ([]bank.Transaction, error) {
+func ReadFrom(r io.Reader) ([]bank.Transaction, error) {
 	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
