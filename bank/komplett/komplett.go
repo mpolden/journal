@@ -28,13 +28,13 @@ func parseAmount(s string) (int64, error) {
 	return n * -1, nil
 }
 
-func ReadFrom(r io.Reader) ([]bank.Transaction, error) {
+func ReadFrom(r io.Reader) ([]bank.Record, error) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
 		return nil, err
 	}
 	var parseErr error
-	var ts []bank.Transaction
+	var rs []bank.Record
 	doc.Find("tr.smtxt12").EachWithBreak(func(i int, s *goquery.Selection) bool {
 		vs := s.Find("td")
 		timeText := strings.TrimSpace(vs.Eq(0).Text())
@@ -50,16 +50,16 @@ func ReadFrom(r io.Reader) ([]bank.Transaction, error) {
 			parseErr = errors.Wrapf(err, "invalid amount: %q", amountText)
 			return false
 		}
-		t := bank.Transaction{
+		t := bank.Record{
 			Time:   time,
 			Text:   text,
 			Amount: amount,
 		}
-		ts = append(ts, t)
+		rs = append(rs, t)
 		return true
 	})
 	if parseErr != nil {
 		return nil, parseErr
 	}
-	return ts, nil
+	return rs, nil
 }

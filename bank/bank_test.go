@@ -16,7 +16,7 @@ func TestReadFrom(t *testing.T) {
 "20.04.2017";"20.04.2017";"Transaction 3";"42,00";"1.337,00";"";""
 `
 	var readFrom ReadFromFunc = ReadFrom
-	ts, err := readFrom(strings.NewReader(lines))
+	rs, err := readFrom(strings.NewReader(lines))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,18 +30,18 @@ func TestReadFrom(t *testing.T) {
 		{date(2017, 3, 10), "Transaction 2", -4200},
 		{date(2017, 4, 20), "Transaction 3", 4200},
 	}
-	if len(ts) != len(tests) {
-		t.Fatalf("want %d records, got %d", len(tests), len(ts))
+	if len(rs) != len(tests) {
+		t.Fatalf("want %d records, got %d", len(tests), len(rs))
 	}
 	for i, tt := range tests {
-		if !ts[i].Time.Equal(tt.t) {
-			t.Errorf("#%d: want Time = %s, got %s", i, tt.t, ts[i].Time)
+		if !rs[i].Time.Equal(tt.t) {
+			t.Errorf("#%d: want Time = %s, got %s", i, tt.t, rs[i].Time)
 		}
-		if ts[i].Text != tt.text {
-			t.Errorf("#%d: want Text = %s, got %s", i, tt.text, ts[i].Text)
+		if rs[i].Text != tt.text {
+			t.Errorf("#%d: want Text = %s, got %s", i, tt.text, rs[i].Text)
 		}
-		if ts[i].Amount != tt.amount {
-			t.Errorf("#%d: want Amount = %d, got %d", i, tt.amount, ts[i].Amount)
+		if rs[i].Amount != tt.amount {
+			t.Errorf("#%d: want Amount = %d, got %d", i, tt.amount, rs[i].Amount)
 		}
 	}
 }

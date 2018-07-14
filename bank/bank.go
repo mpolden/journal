@@ -19,23 +19,23 @@ const (
 var replacer = strings.NewReplacer(decimalSeparator, "", thousandSeparator, "")
 
 // ReadFromFunc is the type of function that each bank's ReadFrom must satisfy.
-type ReadFromFunc func(r io.Reader) ([]Transaction, error)
+type ReadFromFunc func(r io.Reader) ([]Record, error)
 
-// Transaction contains details of a finanical transaction.
-type Transaction struct {
+// Record contains details of a finanical record.
+type Record struct {
 	Time   time.Time
 	Text   string
 	Amount int64
 }
 
-func (t *Transaction) StringAmount() string {
-	s := strconv.FormatInt(t.Amount, 10)
+func (r *Record) StringAmount() string {
+	s := strconv.FormatInt(r.Amount, 10)
 	off := len(s) - 2
 	return s[:off] + "," + s[off:]
 }
 
-func (t *Transaction) String() string {
-	return fmt.Sprintf("%s\t%s\t%s", t.Time.Format("2006-01-02"), t.Text, t.StringAmount())
+func (r *Record) String() string {
+	return fmt.Sprintf("%s\t%s\t%s", r.Time.Format("2006-01-02"), r.Text, r.StringAmount())
 }
 
 func parseAmount(s string) (int64, error) {
@@ -47,10 +47,10 @@ func parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
-func ReadFrom(r io.Reader) ([]Transaction, error) {
+func ReadFrom(r io.Reader) ([]Record, error) {
 	c := csv.NewReader(r)
 	c.Comma = ';'
-	var ts []Transaction
+	var rs []Record
 	line := 0
 	for {
 		record, err := c.Read()
@@ -73,7 +73,7 @@ func ReadFrom(r io.Reader) ([]Transaction, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid amount found on line %d: %q", line, record[3])
 		}
-		ts = append(ts, Transaction{Time: t, Text: text, Amount: amount})
+		rs = append(rs, Record{Time: t, Text: text, Amount: amount})
 	}
-	return ts, nil
+	return rs, nil
 }

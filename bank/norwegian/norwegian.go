@@ -36,7 +36,7 @@ func parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
-func ReadFrom(r io.Reader) ([]bank.Transaction, error) {
+func ReadFrom(r io.Reader) ([]bank.Record, error) {
 	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func ReadFrom(r io.Reader) ([]bank.Transaction, error) {
 	if len(f.Sheets) == 0 {
 		return nil, errors.New("xlsx contains 0 sheets")
 	}
-	var ts []bank.Transaction
+	var rs []bank.Record
 	for _, row := range f.Sheets[0].Rows {
 		cells := row.Cells
 		if len(cells) < 7 {
@@ -68,12 +68,12 @@ func ReadFrom(r io.Reader) ([]bank.Transaction, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid amount: %q", cells[6].String())
 		}
-		t := bank.Transaction{
+		t := bank.Record{
 			Time:   time,
 			Text:   cells[1].String(),
 			Amount: amount,
 		}
-		ts = append(ts, t)
+		rs = append(rs, t)
 	}
-	return ts, nil
+	return rs, nil
 }
