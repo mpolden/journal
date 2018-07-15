@@ -144,8 +144,12 @@ func (c *Client) SelectRecordsBetween(accountNumber string, since, until time.Ti
 	query := `
 SELECT number, time, text, amount FROM record
 INNER JOIN account ON account_id = account.id
-WHERE number = ?`
-	args := []interface{}{accountNumber}
+`
+	args := []interface{}{}
+	if accountNumber != "" {
+		query += " WHERE number = ?"
+		args = append(args, accountNumber)
+	}
 	if !since.IsZero() {
 		query += " AND time >= ?"
 		args = append(args, since.Unix())

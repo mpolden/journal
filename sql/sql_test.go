@@ -75,6 +75,8 @@ func TestAddRecords(t *testing.T) {
 			t.Errorf("want Amount = %d, got %d", records[i].Amount, r.Amount)
 		}
 	}
+
+	// Select records in date range
 	since := date(2017, 2, 10)
 	until := date(2017, 3, 15)
 	rs, err = c.SelectRecordsBetween(number, since, until)
@@ -89,5 +91,14 @@ func TestAddRecords(t *testing.T) {
 	}
 	if got, want := rs[1].Time, since.Unix(); got != want {
 		t.Errorf("want Time = %d, got %d", want, got)
+	}
+
+	// Select all records
+	rs, err = c.SelectRecords("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := len(rs), len(records)-1; got != want {
+		t.Errorf("want len = %d, got %d", want, got)
 	}
 }
