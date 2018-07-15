@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func testClient() *client {
+func testClient() *Client {
 	c, err := New(":memory:")
 	if err != nil {
 		panic(err)
@@ -21,7 +21,7 @@ func TestAddAccount(t *testing.T) {
 	c := testClient()
 	number := "1.33.7"
 	for i := 0; i < 2; i++ {
-		if err := c.AddAccount(Account{Number: number, Description: "Savings"}); err != nil {
+		if err := c.AddAccount(number, "Savings"); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -43,8 +43,8 @@ func TestAddAccount(t *testing.T) {
 
 func TestAddRecords(t *testing.T) {
 	c := testClient()
-	account := Account{Number: "1.33.7", Description: "Savings"}
-	if err := c.AddAccount(account); err != nil {
+	number := "1.33.7"
+	if err := c.AddAccount(number, "Savings"); err != nil {
 		t.Fatal(err)
 	}
 	records := []Record{
@@ -54,10 +54,10 @@ func TestAddRecords(t *testing.T) {
 		{Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42},
 		{Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42}, // Duplicate, ignored
 	}
-	if err := c.AddRecords(account, records); err != nil {
+	if err := c.AddRecords(number, records); err != nil {
 		t.Fatal(err)
 	}
-	rs, err := c.SelectRecords(account.Number)
+	rs, err := c.SelectRecords(number)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func TestAddRecords(t *testing.T) {
 	}
 	since := date(2017, 2, 10)
 	until := date(2017, 3, 15)
-	rs, err = c.SelectRecordsBetween(account.Number, since, until)
+	rs, err = c.SelectRecordsBetween(number, since, until)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS record (
 CREATE INDEX IF NOT EXISTS record_time_idx ON record (time);
 `
 
-type client struct {
+type Client struct {
 	db *sqlx.DB
 	mu sync.RWMutex
 }
@@ -47,7 +47,7 @@ type Record struct {
 	Account
 }
 
-func New(filename string) (*client, error) {
+func New(filename string) (*Client, error) {
 	db, err := sqlx.Connect("sqlite3", filename)
 	if err != nil {
 		return nil, err
@@ -59,10 +59,10 @@ func New(filename string) (*client, error) {
 	if _, err := db.Exec(schema); err != nil {
 		return nil, err
 	}
-	return &client{db: db}, nil
+	return &Client{db: db}, nil
 }
 
-func (c *client) AddAccount(account Account) error {
+func (c *Client) AddAccount(number, description string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	tx, err := c.db.Beginx()
@@ -72,9 +72,9 @@ func (c *client) AddAccount(account Account) error {
 	defer tx.Rollback()
 
 	id := 0
-	err = tx.Get(&id, "SELECT id FROM account WHERE number = $1 LIMIT 1", account.Number)
+	err = tx.Get(&id, "SELECT id FROM account WHERE number = $1 LIMIT 1", number)
 	if err == sql.ErrNoRows {
-		if _, err := tx.Exec("INSERT INTO account (number, description) VALUES ($1, $2)", account.Number, account.Description); err != nil {
+		if _, err := tx.Exec("INSERT INTO account (number, description) VALUES ($1, $2)", number, description); err != nil {
 			return err
 		}
 	} else if err != nil {
@@ -83,7 +83,7 @@ func (c *client) AddAccount(account Account) error {
 	return tx.Commit()
 }
 
-func (c *client) GetAccount(number string) (Account, error) {
+func (c *Client) GetAccount(number string) (Account, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	var account Account
@@ -94,7 +94,7 @@ func (c *client) GetAccount(number string) (Account, error) {
 	return account, nil
 }
 
-func (c *client) AddRecords(account Account, records []Record) error {
+func (c *Client) AddRecords(accountNumber string, records []Record) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	tx, err := c.db.Beginx()
@@ -104,8 +104,8 @@ func (c *client) AddRecords(account Account, records []Record) error {
 	defer tx.Rollback()
 
 	accountID := 0
-	if err := tx.Get(&accountID, "SELECT id FROM account WHERE number = $1 LIMIT 1", account.Number); err != nil {
-		return errors.Wrapf(err, "invalid account: %s", account.Number)
+	if err := tx.Get(&accountID, "SELECT id FROM account WHERE number = $1 LIMIT 1", accountNumber); err != nil {
+		return errors.Wrapf(err, "invalid account: %s", accountNumber)
 	}
 
 	query := `
@@ -134,11 +134,11 @@ VALUES ($1, $2, $3, $4)
 	return tx.Commit()
 }
 
-func (c *client) SelectRecords(accountNumber string) ([]Record, error) {
+func (c *Client) SelectRecords(accountNumber string) ([]Record, error) {
 	return c.SelectRecordsBetween(accountNumber, time.Time{}, time.Time{})
 }
 
-func (c *client) SelectRecordsBetween(accountNumber string, since, until time.Time) ([]Record, error) {
+func (c *Client) SelectRecordsBetween(accountNumber string, since, until time.Time) ([]Record, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	query := `
