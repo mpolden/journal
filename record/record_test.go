@@ -1,12 +1,9 @@
-package norwegian
+package record
 
 import (
-	"os"
-	"path/filepath"
+	"strings"
 	"testing"
 	"time"
-
-	"github.com/mpolden/journal/bank"
 )
 
 func date(year int, month time.Month, day int) time.Time {
@@ -14,21 +11,12 @@ func date(year int, month time.Month, day int) time.Time {
 }
 
 func TestReadFrom(t *testing.T) {
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	testFile := filepath.Join(wd, "testdata", "test.xlsx")
-
-	f, err := os.Open(testFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer f.Close()
-
-	var readFrom bank.ReadFromFunc = ReadFrom
-
-	rs, err := readFrom(f)
+	lines := `"01.02.2017";"01.02.2017";"Transaction 1";"1.337,00";"1.337,00";"";""
+"10.03.2017";"10.03.2017";"Transaction 2";"-42,00";"1.295,00";"";""
+"20.04.2017";"20.04.2017";"Transaction 3";"42,00";"1.337,00";"";""
+`
+	var readFrom ReadFromFunc = ReadFrom
+	rs, err := readFrom(strings.NewReader(lines))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,9 +27,8 @@ func TestReadFrom(t *testing.T) {
 		amount int64
 	}{
 		{date(2017, 2, 1), "Transaction 1", 133700},
-		{date(2017, 3, 10), "Transaction 2", -4233},
-		{date(2017, 4, 20), "Transaction 3", 4233},
-		{date(2017, 5, 20), "Transaction 4", -4230},
+		{date(2017, 3, 10), "Transaction 2", -4200},
+		{date(2017, 4, 20), "Transaction 3", 4200},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mpolden/journal/bank"
+	"github.com/mpolden/journal/record"
 	"github.com/pkg/errors"
 	"github.com/tealeg/xlsx"
 )
@@ -36,7 +36,7 @@ func parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
-func ReadFrom(r io.Reader) ([]bank.Record, error) {
+func ReadFrom(r io.Reader) ([]record.Record, error) {
 	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func ReadFrom(r io.Reader) ([]bank.Record, error) {
 	if len(f.Sheets) == 0 {
 		return nil, errors.New("xlsx contains 0 sheets")
 	}
-	var rs []bank.Record
+	var rs []record.Record
 	for _, row := range f.Sheets[0].Rows {
 		cells := row.Cells
 		if len(cells) < 7 {
@@ -68,7 +68,7 @@ func ReadFrom(r io.Reader) ([]bank.Record, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid amount: %q", cells[6].String())
 		}
-		t := bank.Record{
+		t := record.Record{
 			Time:   time,
 			Text:   cells[1].String(),
 			Amount: amount,

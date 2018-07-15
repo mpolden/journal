@@ -1,4 +1,4 @@
-package bank
+package record
 
 import (
 	"encoding/csv"

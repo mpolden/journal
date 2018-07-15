@@ -1,12 +1,10 @@
-package komplett
+package norwegian
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
-
-	"github.com/mpolden/journal/bank"
 )
 
 func date(year int, month time.Month, day int) time.Time {
@@ -18,7 +16,7 @@ func TestReadFrom(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	testFile := filepath.Join(wd, "testdata", "test.html")
+	testFile := filepath.Join(wd, "testdata", "test.xlsx")
 
 	f, err := os.Open(testFile)
 	if err != nil {
@@ -26,9 +24,7 @@ func TestReadFrom(t *testing.T) {
 	}
 	defer f.Close()
 
-	var readFrom bank.ReadFromFunc = ReadFrom
-
-	rs, err := readFrom(f)
+	rs, err := ReadFrom(f)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,10 +34,10 @@ func TestReadFrom(t *testing.T) {
 		text   string
 		amount int64
 	}{
-		{date(2017, 5, 20), "Transaction 4", -4230},
-		{date(2017, 4, 20), "Transaction 3", 4233},
-		{date(2017, 3, 10), "Transaction 2", -4233},
 		{date(2017, 2, 1), "Transaction 1", 133700},
+		{date(2017, 3, 10), "Transaction 2", -4233},
+		{date(2017, 4, 20), "Transaction 3", 4233},
+		{date(2017, 5, 20), "Transaction 4", -4230},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))

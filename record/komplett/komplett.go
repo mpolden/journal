@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/mpolden/journal/bank"
+	"github.com/mpolden/journal/record"
 	"github.com/pkg/errors"
 )
 
@@ -28,13 +28,13 @@ func parseAmount(s string) (int64, error) {
 	return n * -1, nil
 }
 
-func ReadFrom(r io.Reader) ([]bank.Record, error) {
+func ReadFrom(r io.Reader) ([]record.Record, error) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
 		return nil, err
 	}
 	var parseErr error
-	var rs []bank.Record
+	var rs []record.Record
 	doc.Find("tr.smtxt12").EachWithBreak(func(i int, s *goquery.Selection) bool {
 		vs := s.Find("td")
 		timeText := strings.TrimSpace(vs.Eq(0).Text())
@@ -50,7 +50,7 @@ func ReadFrom(r io.Reader) ([]bank.Record, error) {
 			parseErr = errors.Wrapf(err, "invalid amount: %q", amountText)
 			return false
 		}
-		t := bank.Record{
+		t := record.Record{
 			Time:   time,
 			Text:   text,
 			Amount: amount,

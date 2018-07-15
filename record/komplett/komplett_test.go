@@ -1,7 +1,8 @@
-package bank
+package komplett
 
 import (
-	"strings"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -11,12 +12,19 @@ func date(year int, month time.Month, day int) time.Time {
 }
 
 func TestReadFrom(t *testing.T) {
-	lines := `"01.02.2017";"01.02.2017";"Transaction 1";"1.337,00";"1.337,00";"";""
-"10.03.2017";"10.03.2017";"Transaction 2";"-42,00";"1.295,00";"";""
-"20.04.2017";"20.04.2017";"Transaction 3";"42,00";"1.337,00";"";""
-`
-	var readFrom ReadFromFunc = ReadFrom
-	rs, err := readFrom(strings.NewReader(lines))
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	testFile := filepath.Join(wd, "testdata", "test.html")
+
+	f, err := os.Open(testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+
+	rs, err := ReadFrom(f)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,9 +34,10 @@ func TestReadFrom(t *testing.T) {
 		text   string
 		amount int64
 	}{
+		{date(2017, 5, 20), "Transaction 4", -4230},
+		{date(2017, 4, 20), "Transaction 3", 4233},
+		{date(2017, 3, 10), "Transaction 2", -4233},
 		{date(2017, 2, 1), "Transaction 1", 133700},
-		{date(2017, 3, 10), "Transaction 2", -4200},
-		{date(2017, 4, 20), "Transaction 3", 4200},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))
