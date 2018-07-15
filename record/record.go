@@ -1,6 +1,7 @@
 package record
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 const (
 	decimalSeparator  = "."
 	thousandSeparator = ","
+	byteOrderMark     = '\uFEFF'
 )
 
 // Reader is the interface for record readers.
@@ -60,7 +62,18 @@ func (d *defaultReader) parseAmount(s string) (int64, error) {
 }
 
 func (r *defaultReader) Read() ([]Record, error) {
-	c := csv.NewReader(r.rd)
+	buf := bufio.NewReader(r.rd)
+	// Peek at the first rune see if the file starts with a byte order mark
+	rune, _, err := buf.ReadRune()
+	if err != nil {
+		return nil, err
+	}
+	if rune != byteOrderMark {
+		if err := buf.UnreadRune(); err != nil {
+			return nil, err
+		}
+	}
+	c := csv.NewReader(buf)
 	c.Comma = ';'
 	var rs []Record
 	line := 0
