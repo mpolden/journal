@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS record (
   time INTEGER NOT NULL,
   text TEXT NOT NULL,
   amount INTEGER NOT NULL,
+  CONSTRAINT record_unique UNIQUE(account_id, time, text, amount),
   FOREIGN KEY(account_id) REFERENCES account(id)
 );
 
@@ -62,50 +63,68 @@ func New(filename string) (*Client, error) {
 	return &Client{db: db}, nil
 }
 
-func (c *Client) AddAccount(number, description string) error {
+func rowsAffected(result sql.Result) int64 {
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		// SQLite implements RowsAffected
+		panic(err)
+	}
+	return rowsAffected
+}
+
+func (c *Client) AddAccounts(accounts []Account) (int64, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	tx, err := c.db.Beginx()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer tx.Rollback()
-
-	id := 0
-	err = tx.Get(&id, "SELECT id FROM account WHERE number = $1 LIMIT 1", number)
-	if err == sql.ErrNoRows {
-		if _, err := tx.Exec("INSERT INTO account (number, description) VALUES ($1, $2)", number, description); err != nil {
-			return err
+	var rows int64
+	for _, a := range accounts {
+		count := 0
+		if err := tx.Get(&count, "SELECT COUNT(*) FROM account WHERE number = ? LIMIT 1", a.Number); err != nil {
+			return 0, err
 		}
-	} else if err != nil {
-		return err
+		if count > 0 {
+			continue
+		}
+		res, err := tx.Exec("INSERT INTO account (number, description) VALUES ($1, $2)", a.Number, a.Description)
+		if err != nil {
+			return 0, err
+		}
+		rows += rowsAffected(res)
 	}
-	return tx.Commit()
+	return rows, tx.Commit()
 }
 
-func (c *Client) GetAccount(number string) (Account, error) {
+func (c *Client) SelectAccounts(number string) ([]Account, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	var account Account
-	query := "SELECT number, description FROM account WHERE number = $1 LIMIT 1"
-	if err := c.db.Get(&account, query, number); err != nil {
-		return Account{}, err
+	var as []Account
+	query := "SELECT number, description FROM account"
+	args := []interface{}{}
+	if number != "" {
+		query += " WHERE number = ?"
+		args = append(args, number)
 	}
-	return account, nil
+	query += " ORDER BY number ASC"
+	err := c.db.Select(&as, query, args...)
+	return as, err
 }
 
-func (c *Client) AddRecords(accountNumber string, records []Record) error {
+func (c *Client) AddRecords(accountNumber string, records []Record) (int64, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	tx, err := c.db.Beginx()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer tx.Rollback()
 
 	accountID := 0
 	if err := tx.Get(&accountID, "SELECT id FROM account WHERE number = $1 LIMIT 1", accountNumber); err != nil {
-		return errors.Wrapf(err, "invalid account: %s", accountNumber)
+		return 0, errors.Wrapf(err, "invalid account: %s", accountNumber)
 	}
 
 	query := `
@@ -119,19 +138,23 @@ INSERT INTO record (account_id, time, text, amount)
 VALUES ($1, $2, $3, $4)
 `
 
+	var rows int64
 	for _, r := range records {
 		count := 0
 		if err := tx.Get(&count, query, accountID, r.Time, r.Text, r.Amount); err != nil {
-			return err
+			return 0, err
 		}
 		if count > 0 {
 			continue
 		}
-		if _, err := tx.Exec(insertQuery, accountID, r.Time, r.Text, r.Amount); err != nil {
-			return err
+		res, err := tx.Exec(insertQuery, accountID, r.Time, r.Text, r.Amount)
+		if err != nil {
+			return 0, err
 		}
+		rows += rowsAffected(res)
 	}
-	return tx.Commit()
+
+	return rows, tx.Commit()
 }
 
 func (c *Client) SelectRecords(accountNumber string) ([]Record, error) {

@@ -26,6 +26,11 @@ type Journal struct {
 	db       *sql.Client
 }
 
+type Writes struct {
+	Account int64
+	Record  int64
+}
+
 func (c *Config) load() error {
 	if len(c.Database) == 0 {
 		return fmt.Errorf("invalid path to database: %q", c.Database)
@@ -75,22 +80,27 @@ func New(conf Config) (*Journal, error) {
 	}, nil
 }
 
-func (j *Journal) writeAccounts() error {
-	for _, a := range j.accounts {
-		if err := j.db.AddAccount(a.Number, a.Description); err != nil {
-			return err
-		}
+func (j *Journal) writeAccounts() (int64, error) {
+	as := make([]sql.Account, len(j.accounts))
+	for i, a := range j.accounts {
+		as[i] = sql.Account{Number: a.Number, Description: a.Description}
 	}
-	return nil
+	return j.db.AddAccounts(as)
 }
 
-func (j *Journal) Write(accountNumber string, records []record.Record) error {
-	if err := j.writeAccounts(); err != nil {
-		return err
+func (j *Journal) Write(accountNumber string, records []record.Record) (Writes, error) {
+	var writes Writes
+	n, err := j.writeAccounts()
+	if err != nil {
+		return writes, err
 	}
+	writes.Account = n
 	rs := make([]sql.Record, len(records))
 	for i, r := range records {
 		rs[i] = sql.Record{Time: r.Time.Unix(), Text: r.Text, Amount: r.Amount}
 	}
-	return j.db.AddRecords(accountNumber, rs)
+	n, err = j.db.AddRecords(accountNumber, rs)
+	writes.Record = n
+	return writes, err
+}
 }

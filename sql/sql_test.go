@@ -17,34 +17,40 @@ func date(year int, month time.Month, day int) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 }
 
-func TestAddAccount(t *testing.T) {
+func TestAddAccounts(t *testing.T) {
 	c := testClient()
-	number := "1.33.7"
-	for i := 0; i < 2; i++ {
-		if err := c.AddAccount(number, "Savings"); err != nil {
-			t.Fatal(err)
-		}
+	accounts := []Account{
+		{Number: "1.2.3", Description: "Account 1"},
+		{Number: "4.5.6", Description: "Account 2"},
+		{Number: "7.8.9", Description: "Account 3"},
+		{Number: "1.2.3", Description: "Account 1"}, // Duplicate
 	}
-	count := 0
-	if err := c.db.Get(&count, "SELECT COUNT(*) FROM account LIMIT 1"); err != nil {
-		t.Fatal(err)
-	}
-	if count != 1 {
-		t.Errorf("want %d accounts, got %d", 1, count)
-	}
-	account, err := c.GetAccount(number)
+	n, err := c.AddAccounts(accounts)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := account.Number, "1.33.7"; got != want {
-		t.Errorf("want Number = %s, got %s", want, got)
+	if want := int64(3); n != want {
+		t.Errorf("want %d accounts, got %d", want, n)
+	}
+	as, err := c.SelectAccounts("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, a := range as {
+		if accounts[i].Number != a.Number {
+			t.Errorf("want Number = %s, got %s", accounts[i].Number, a.Number)
+		}
+		if accounts[i].Description != a.Description {
+			t.Errorf("want Number = %s, got %s", accounts[i].Number, a.Number)
+		}
 	}
 }
 
 func TestAddRecords(t *testing.T) {
 	c := testClient()
-	number := "1.33.7"
-	if err := c.AddAccount(number, "Savings"); err != nil {
+	number := "1.2.3"
+	as := []Account{{Number: number, Description: "Savings"}}
+	if _, err := c.AddAccounts(as); err != nil {
 		t.Fatal(err)
 	}
 	records := []Record{
@@ -54,8 +60,12 @@ func TestAddRecords(t *testing.T) {
 		{Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42},
 		{Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42}, // Duplicate, ignored
 	}
-	if err := c.AddRecords(number, records); err != nil {
+	n, err := c.AddRecords(number, records)
+	if err != nil {
 		t.Fatal(err)
+	}
+	if want := int64(4); n != want {
+		t.Errorf("want %d records, got %d", want, n)
 	}
 	rs, err := c.SelectRecords(number)
 	if err != nil {

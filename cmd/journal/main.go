@@ -9,12 +9,13 @@ import (
 )
 
 func main() {
-	p := flags.NewParser(nil, flags.Default)
+	p := flags.NewParser(nil, flags.HelpFlag|flags.PassDoubleDash)
 	log := log.New(os.Stderr, "journal: ", 0)
 
 	imp := cmd.Import{Log: log}
-	if _, err := p.AddCommand("import", "Import records",
-		"Imports records into the database.", &imp); err != nil {
+	if _, err := p.AddCommand("import", "Import records", "Imports records into the database.", &imp); err != nil {
+		log.Fatal(err)
+	}
 		log.Fatal(err)
 	}
 

@@ -37,7 +37,10 @@ func (i *Import) Execute(args []string) error {
 		return err
 	}
 
-	return j.Write(i.Args.Account, rs)
+	writes, err := j.Write(i.Args.Account, rs)
+	i.Log.Printf("created %d new account(s)", writes.Account)
+	i.Log.Printf("imported %d new record(s)", writes.Record)
+	return err
 }
 
 func (i *Import) readRecords() ([]record.Record, error) {
