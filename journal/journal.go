@@ -1,13 +1,12 @@
 package journal
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/BurntSushi/toml"
 	"github.com/mpolden/journal/record"
 	"github.com/mpolden/journal/sql"
 )
@@ -27,7 +26,7 @@ type Journal struct {
 	db       *sql.Client
 }
 
-func (c *Config) validate() error {
+func (c *Config) load() error {
 	if len(c.Database) == 0 {
 		return fmt.Errorf("invalid path to database: %q", c.Database)
 	}
@@ -40,13 +39,9 @@ func (c *Config) validate() error {
 }
 
 func readConfig(r io.Reader) (Config, error) {
-	data, err := ioutil.ReadAll(r)
-	if err != nil {
-		return Config{}, err
-	}
-	var cfg Config
-	err = json.Unmarshal(data, &cfg)
-	return cfg, err
+	var conf Config
+	_, err := toml.DecodeReader(r, &conf)
+	return conf, err
 }
 
 func FromConfig(name string) (*Journal, error) {
@@ -59,22 +54,25 @@ func FromConfig(name string) (*Journal, error) {
 		return nil, err
 	}
 	defer f.Close()
-	cfg, err := readConfig(f)
+	conf, err := readConfig(f)
 	if err != nil {
 		return nil, err
 	}
-	return New(cfg)
+	return New(conf)
 }
 
-func New(cfg Config) (*Journal, error) {
-	if err := cfg.validate(); err != nil {
+func New(conf Config) (*Journal, error) {
+	if err := conf.load(); err != nil {
 		return nil, err
 	}
-	db, err := sql.New(cfg.Database)
+	db, err := sql.New(conf.Database)
 	if err != nil {
 		return nil, err
 	}
-	return &Journal{db: db, accounts: cfg.Accounts}, nil
+	return &Journal{
+		db:       db,
+		accounts: conf.Accounts,
+	}, nil
 }
 
 func (j *Journal) writeAccounts() error {

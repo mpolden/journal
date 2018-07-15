@@ -9,23 +9,22 @@ import (
 )
 
 func TestJournal(t *testing.T) {
-	jsonConfig := `
-{
-  "Database": ":memory:",
-  "Accounts": [
-    {
-      "Number": "1234.56.78900",
-      "Description": "foo"
-    }
-  ]
-}
+	tomlConf := `
+Database = ":memory:"
+[[accounts]]
+number = "1234.56.78900"
+description = "My account"
+
+[[groups]]
+name = "Travel"
+patterns = ["^Foo"]
 `
-	cfg, err := readConfig(strings.NewReader(jsonConfig))
+	conf, err := readConfig(strings.NewReader(tomlConf))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	j, err := New(cfg)
+	j, err := New(conf)
 	if err != nil {
 		t.Fatal(err)
 	}
