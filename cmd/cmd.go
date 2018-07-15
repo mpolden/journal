@@ -11,12 +11,12 @@ import (
 	"github.com/mpolden/journal/record/norwegian"
 )
 
-type opts struct {
+type globalOpts struct {
 	Config string `short:"f" long:"config" description:"Config file" value-name:"FILE" default:"~/.journalrc"`
 }
 
 type Import struct {
-	opts
+	globalOpts
 	Log    *log.Logger
 	Parser string `short:"p" long:"parser" description:"Name of parser to use when importing data" choice:"csv" choice:"komplett" choice:"norwegian" default:"csv"`
 	Dryrun bool   `short:"n" long:"dry-run" description:"Only print what would happen"`
