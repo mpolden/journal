@@ -24,7 +24,8 @@ func TestReadFrom(t *testing.T) {
 	}
 	defer f.Close()
 
-	rs, err := ReadFrom(f)
+	r := NewReader(f)
+	rs, err := r.Read()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -16,10 +16,10 @@ const (
 	thousandSeparator = ","
 )
 
-var replacer = strings.NewReplacer(decimalSeparator, "", thousandSeparator, "")
-
-// ReadFromFunc is the type of function that each bank's ReadFrom must satisfy.
-type ReadFromFunc func(r io.Reader) ([]Record, error)
+// Reader is the interface for record readers.
+type Reader interface {
+	Read() ([]Record, error)
+}
 
 // Record contains details of a finanical record.
 type Record struct {
@@ -38,8 +38,20 @@ func (r *Record) String() string {
 	return fmt.Sprintf("%s\t%s\t%s", r.Time.Format("2006-01-02"), r.Text, r.StringAmount())
 }
 
-func parseAmount(s string) (int64, error) {
-	v := replacer.Replace(s)
+type defaultReader struct {
+	rd       io.Reader
+	replacer *strings.Replacer
+}
+
+func NewReader(rd io.Reader) Reader {
+	return &defaultReader{
+		rd:       rd,
+		replacer: strings.NewReplacer(decimalSeparator, "", thousandSeparator, ""),
+	}
+}
+
+func (d *defaultReader) parseAmount(s string) (int64, error) {
+	v := d.replacer.Replace(s)
 	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
 		return 0, err
@@ -47,8 +59,8 @@ func parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
-func ReadFrom(r io.Reader) ([]Record, error) {
-	c := csv.NewReader(r)
+func (r *defaultReader) Read() ([]Record, error) {
+	c := csv.NewReader(r.rd)
 	c.Comma = ';'
 	var rs []Record
 	line := 0
@@ -69,7 +81,7 @@ func ReadFrom(r io.Reader) ([]Record, error) {
 			return nil, errors.Wrapf(err, "invalid time found on line %d: %q", line, record[0])
 		}
 		text := record[2]
-		amount, err := parseAmount(record[3])
+		amount, err := r.parseAmount(record[3])
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid amount found on line %d: %q", line, record[3])
 		}

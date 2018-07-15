@@ -18,14 +18,24 @@ const (
 	thousandSeparator = ","
 )
 
-var replacer = strings.NewReplacer(decimalSeparator, "", thousandSeparator, "")
+type reader struct {
+	rd       io.Reader
+	replacer *strings.Replacer
+}
 
-func parseAmount(s string) (int64, error) {
+func NewReader(rd io.Reader) record.Reader {
+	return &reader{
+		rd:       rd,
+		replacer: strings.NewReplacer(decimalSeparator, "", thousandSeparator, ""),
+	}
+}
+
+func (r *reader) parseAmount(s string) (int64, error) {
 	if strings.LastIndex(s, decimalSeparator) == len(s)-2 { // Pad single digit decimal
 		s += "0"
 	}
 	hasDecimals := strings.Contains(s, decimalSeparator)
-	v := replacer.Replace(s)
+	v := r.replacer.Replace(s)
 	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
 		return 0, err
@@ -36,8 +46,8 @@ func parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
-func ReadFrom(r io.Reader) ([]record.Record, error) {
-	data, err := ioutil.ReadAll(r)
+func (r *reader) Read() ([]record.Record, error) {
+	data, err := ioutil.ReadAll(r.rd)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +74,7 @@ func ReadFrom(r io.Reader) ([]record.Record, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid date: %q", cells[0].String())
 		}
-		amount, err := parseAmount(cells[6].String())
+		amount, err := r.parseAmount(cells[6].String())
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid amount: %q", cells[6].String())
 		}

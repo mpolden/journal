@@ -16,10 +16,20 @@ const (
 	thousandSeparator = " "
 )
 
-var replacer = strings.NewReplacer(decimalSeparator, "", thousandSeparator, "")
+type reader struct {
+	rd       io.Reader
+	replacer *strings.Replacer
+}
 
-func parseAmount(s string) (int64, error) {
-	v := replacer.Replace(s)
+func NewReader(rd io.Reader) record.Reader {
+	return &reader{
+		rd:       rd,
+		replacer: strings.NewReplacer(decimalSeparator, "", thousandSeparator, ""),
+	}
+}
+
+func (r *reader) parseAmount(s string) (int64, error) {
+	v := r.replacer.Replace(s)
 	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
 		return 0, err
@@ -28,8 +38,8 @@ func parseAmount(s string) (int64, error) {
 	return n * -1, nil
 }
 
-func ReadFrom(r io.Reader) ([]record.Record, error) {
-	doc, err := goquery.NewDocumentFromReader(r)
+func (r *reader) Read() ([]record.Record, error) {
+	doc, err := goquery.NewDocumentFromReader(r.rd)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +55,7 @@ func ReadFrom(r io.Reader) ([]record.Record, error) {
 		}
 		text := strings.TrimSpace(vs.Eq(1).Text())
 		amountText := strings.TrimSpace(s.Find("td span.credit-amount").Text())
-		amount, err := parseAmount(amountText)
+		amount, err := r.parseAmount(amountText)
 		if err != nil {
 			parseErr = errors.Wrapf(err, "invalid amount: %q", amountText)
 			return false
