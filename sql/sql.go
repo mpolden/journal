@@ -14,7 +14,7 @@ const schema = `
 CREATE TABLE IF NOT EXISTS account (
   id INTEGER PRIMARY KEY,
   number TEXT NOT NULL,
-  description TEXT NOT NULL,
+  description TEXT,
   CONSTRAINT number_unique UNIQUE (number)
 );
 
