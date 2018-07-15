@@ -3,7 +3,6 @@ package record
 import (
 	"bufio"
 	"encoding/csv"
-	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -25,19 +24,10 @@ type Reader interface {
 
 // Record contains details of a finanical record.
 type Record struct {
-	Time   time.Time
-	Text   string
-	Amount int64
-}
-
-func (r *Record) StringAmount() string {
-	s := strconv.FormatInt(r.Amount, 10)
-	off := len(s) - 2
-	return s[:off] + "," + s[off:]
-}
-
-func (r *Record) String() string {
-	return fmt.Sprintf("%s\t%s\t%s", r.Time.Format("2006-01-02"), r.Text, r.StringAmount())
+	Account string
+	Time    time.Time
+	Text    string
+	Amount  int64
 }
 
 type defaultReader struct {

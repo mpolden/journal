@@ -165,7 +165,7 @@ func (c *Client) SelectRecordsBetween(accountNumber string, since, until time.Ti
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	query := `
-SELECT number, time, text, amount FROM record
+SELECT description, time, text, amount FROM record
 INNER JOIN account ON account_id = account.id
 `
 	args := []interface{}{}

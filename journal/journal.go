@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/mpolden/journal/record"
@@ -16,13 +18,21 @@ type Account struct {
 	Description string
 }
 
+type Group struct {
+	Name     string
+	Patterns []string
+	patterns []*regexp.Regexp
+}
+
 type Config struct {
 	Database string
 	Accounts []Account
+	Groups   []Group
 }
 
 type Journal struct {
 	accounts []Account
+	groups   []Group
 	db       *sql.Client
 }
 
@@ -39,6 +49,22 @@ func (c *Config) load() error {
 		if len(a.Number) == 0 {
 			return fmt.Errorf("invalid account number: %q", a.Number)
 		}
+	}
+	for i, g := range c.Groups {
+		if len(g.Name) == 0 {
+			return fmt.Errorf("invalid group name: %q", g.Name)
+		}
+		for _, pattern := range g.Patterns {
+			if len(pattern) == 0 {
+				return fmt.Errorf("invalid pattern: %q", pattern)
+			}
+			p, err := regexp.Compile(pattern)
+			if err != nil {
+				return err
+			}
+			c.Groups[i].patterns = append(c.Groups[i].patterns, p)
+		}
+
 	}
 	return nil
 }
@@ -77,6 +103,7 @@ func New(conf Config) (*Journal, error) {
 	return &Journal{
 		db:       db,
 		accounts: conf.Accounts,
+		groups:   conf.Groups,
 	}, nil
 }
 
@@ -103,4 +130,40 @@ func (j *Journal) Write(accountNumber string, records []record.Record) (Writes, 
 	writes.Record = n
 	return writes, err
 }
+
+func (j *Journal) Read(accountNumber string, since, until time.Time) ([]record.Record, error) {
+	rs, err := j.db.SelectRecordsBetween(accountNumber, since, until)
+	if err != nil {
+		return nil, err
+	}
+	records := make([]record.Record, len(rs))
+	for i, r := range rs {
+		records[i] = record.Record{
+			Account: r.Account.Description,
+			Time:    time.Unix(r.Time, 0),
+			Text:    r.Text,
+			Amount:  r.Amount,
+		}
+	}
+	return records, nil
+}
+
+func (j *Journal) Group(rs []record.Record) map[string][]record.Record {
+	groups := make(map[string][]record.Record)
+	for _, r := range rs {
+		g := j.findGroup(r)
+		groups[g.Name] = append(groups[g.Name], r)
+	}
+	return groups
+}
+
+func (j *Journal) findGroup(r record.Record) *Group {
+	for i, g := range j.groups {
+		for _, p := range g.patterns {
+			if p.MatchString(r.Text) {
+				return &j.groups[i]
+			}
+		}
+	}
+	return &Group{Name: "*** UNMATCHED ***"}
 }

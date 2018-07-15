@@ -16,6 +16,9 @@ func main() {
 	if _, err := p.AddCommand("import", "Import records", "Imports records into the database.", &imp); err != nil {
 		log.Fatal(err)
 	}
+
+	list := cmd.List{Log: log}
+	if _, err := p.AddCommand("ls", "List records", "Display records in database", &list); err != nil {
 		log.Fatal(err)
 	}
 
