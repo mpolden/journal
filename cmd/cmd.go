@@ -18,7 +18,7 @@ type globalOpts struct {
 type Import struct {
 	globalOpts
 	Log    *log.Logger
-	Parser string `short:"p" long:"parser" description:"Name of parser to use when importing data" choice:"csv" choice:"komplett" choice:"norwegian" default:"csv"`
+	Reader string `short:"r" long:"reader" description:"Name of reader to use when importing data" choice:"csv" choice:"komplett" choice:"norwegian" default:"csv"`
 	Dryrun bool   `short:"n" long:"dry-run" description:"Only print what would happen"`
 	Args   struct {
 		Account string `description:"Account number" positional-arg-name:"account-number"`
@@ -48,7 +48,7 @@ func (i *Import) readRecords() ([]record.Record, error) {
 	defer f.Close()
 
 	var r record.Reader
-	switch i.Parser {
+	switch i.Reader {
 	case "csv":
 		r = record.NewReader(f)
 	case "komplett":
@@ -56,7 +56,7 @@ func (i *Import) readRecords() ([]record.Record, error) {
 	case "norwegian":
 		r = norwegian.NewReader(f)
 	default:
-		return nil, fmt.Errorf("invalid parser: %q", i.Parser)
+		return nil, fmt.Errorf("invalid reader: %q", i.Reader)
 	}
 	return r.Read()
 }
