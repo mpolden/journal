@@ -52,7 +52,7 @@ sets the group name and `patterns` sets the list of regular expressions that
 must match the corresponding record text.
 
 If any of the patterns in `patterns` match, the group is considered a match.
-Matching follows the order declaring the configuration file, where the first
+Matching follows the order declared in the configuration file, where the first
 matching group wins.
 
 ### Example export file
@@ -60,7 +60,7 @@ matching group wins.
 Most Norwegian banks support export to CSV. This can accomplished through your
 bank's web interface.
 
-A CSV export typically looks like the following:
+A CSV export typically looks like this:
 
 ```csv
 "01.05.2018";"01.02.2017";"Rema 1000";"-1.337,00";"3.663,00";"";""
