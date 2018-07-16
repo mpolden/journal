@@ -140,13 +140,13 @@ func formatAmount(n int64) string {
 
 func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time) {
 	table := tablewriter.NewWriter(w)
-	table.SetHeader([]string{"Group", "Sum", "From", "To"})
+	table.SetHeader([]string{"Group", "Sum", "Records", "From", "To"})
 	for _, rg := range rgs {
 		var sum int64
 		for _, r := range rg.Records {
 			sum += r.Amount
 		}
-		row := []string{rg.Name, formatAmount(sum), since.Format("2006-01-02"), until.Format("2006-01-02")}
+		row := []string{rg.Name, formatAmount(sum), strconv.Itoa(len(rg.Records)), since.Format("2006-01-02"), until.Format("2006-01-02")}
 		table.Append(row)
 	}
 	table.Render()
