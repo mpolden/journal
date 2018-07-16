@@ -109,7 +109,7 @@ func (l *List) Execute(args []string) error {
 	if l.Explain {
 		writeAll(os.Stdout, j.Group(rs))
 	} else {
-		writeGrouped(os.Stdout, j.Group(rs), since, until)
+		writeGroups(os.Stdout, j.Group(rs), since, until)
 	}
 	return nil
 }
@@ -120,7 +120,7 @@ func formatAmount(n int64) string {
 	return s[:off] + "," + s[off:]
 }
 
-func writeGrouped(w io.Writer, rgs []journal.RecordGroup, since, until time.Time) error {
+func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time) {
 	if until.IsZero() {
 		until = time.Now()
 	}
@@ -135,10 +135,9 @@ func writeGrouped(w io.Writer, rgs []journal.RecordGroup, since, until time.Time
 		table.Append(row)
 	}
 	table.Render()
-	return nil
 }
 
-func writeAll(w io.Writer, rgs []journal.RecordGroup) error {
+func writeAll(w io.Writer, rgs []journal.RecordGroup) {
 	table := tablewriter.NewWriter(w)
 	table.SetHeader([]string{"Account", "Account name", "Date", "Record", "Amount", "Group"})
 	for _, rg := range rgs {
@@ -155,5 +154,4 @@ func writeAll(w io.Writer, rgs []journal.RecordGroup) error {
 		}
 	}
 	table.Render()
-	return nil
 }
