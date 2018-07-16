@@ -85,23 +85,41 @@ func parseTime(s string) (time.Time, error) {
 	return time.Parse("2006-01-02", s)
 }
 
+func since(now, t time.Time) time.Time {
+	if t.IsZero() { // Default to start of month
+		t = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	}
+	return t
+}
+
+func until(now, t time.Time) time.Time {
+	if t.IsZero() { // Default to current day
+		t = now
+	}
+	return t
+}
+
 func (l *List) Execute(args []string) error {
 	j, err := journal.FromConfig(l.Config)
 	if err != nil {
 		return err
 	}
 
-	since, err := parseTime(l.Since)
+	now := time.Now()
+
+	s, err := parseTime(l.Since)
 	if err != nil {
 		return err
 	}
+	s = since(now, s)
 
-	until, err := parseTime(l.Until)
+	u, err := parseTime(l.Until)
 	if err != nil {
 		return err
 	}
+	u = until(now, u)
 
-	rs, err := j.Read(l.Args.Account, since, until)
+	rs, err := j.Read(l.Args.Account, s, u)
 	if err != nil {
 		return err
 	}
@@ -109,7 +127,7 @@ func (l *List) Execute(args []string) error {
 	if l.Explain {
 		writeAll(os.Stdout, j.Group(rs))
 	} else {
-		writeGroups(os.Stdout, j.Group(rs), since, until)
+		writeGroups(os.Stdout, j.Group(rs), s, u)
 	}
 	return nil
 }
@@ -121,9 +139,6 @@ func formatAmount(n int64) string {
 }
 
 func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time) {
-	if until.IsZero() {
-		until = time.Now()
-	}
 	table := tablewriter.NewWriter(w)
 	table.SetHeader([]string{"Group", "Sum", "From", "To"})
 	for _, rg := range rgs {
@@ -139,7 +154,7 @@ func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time)
 
 func writeAll(w io.Writer, rgs []journal.RecordGroup) {
 	table := tablewriter.NewWriter(w)
-	table.SetHeader([]string{"Account", "Account name", "Date", "Record", "Amount", "Group"})
+	table.SetHeader([]string{"Account", "Account name", "Date", "Text", "Amount", "Group"})
 	for _, rg := range rgs {
 		for _, r := range rg.Records {
 			row := []string{
