@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -16,6 +17,11 @@ import (
 type Account struct {
 	Number string
 	Name   string
+}
+
+type RecordGroup struct {
+	Name    string
+	Records []record.Record
 }
 
 type Group struct {
@@ -140,7 +146,7 @@ func (j *Journal) Read(accountNumber string, since, until time.Time) ([]record.R
 	for i, r := range rs {
 		records[i] = record.Record{
 			Account: record.Account{Number: r.Account.Number, Name: r.Account.Name},
-			Time:    time.Unix(r.Time, 0),
+			Time:    time.Unix(r.Time, 0).UTC(),
 			Text:    r.Text,
 			Amount:  r.Amount,
 		}
@@ -148,13 +154,18 @@ func (j *Journal) Read(accountNumber string, since, until time.Time) ([]record.R
 	return records, nil
 }
 
-func (j *Journal) Group(rs []record.Record) map[string][]record.Record {
+func (j *Journal) Group(rs []record.Record) []RecordGroup {
 	groups := make(map[string][]record.Record)
 	for _, r := range rs {
 		g := j.findGroup(r)
 		groups[g.Name] = append(groups[g.Name], r)
 	}
-	return groups
+	var rgs []RecordGroup
+	for name, rs := range groups {
+		rgs = append(rgs, RecordGroup{Name: name, Records: rs})
+	}
+	sort.Slice(rgs, func(i, j int) bool { return rgs[i].Name < rgs[j].Name })
+	return rgs
 }
 
 func (j *Journal) findGroup(r record.Record) *Group {

@@ -107,7 +107,7 @@ func (l *List) Execute(args []string) error {
 	}
 
 	if l.Explain {
-		writeAll(os.Stdout, j.Group(rs), since, until)
+		writeAll(os.Stdout, j.Group(rs))
 	} else {
 		writeGrouped(os.Stdout, j.Group(rs), since, until)
 	}
@@ -120,37 +120,36 @@ func formatAmount(n int64) string {
 	return s[:off] + "," + s[off:]
 }
 
-func writeGrouped(w io.Writer, g map[string][]record.Record, since, until time.Time) error {
+func writeGrouped(w io.Writer, rgs []journal.RecordGroup, since, until time.Time) error {
 	if until.IsZero() {
 		until = time.Now()
 	}
 	table := tablewriter.NewWriter(w)
 	table.SetHeader([]string{"Group", "Sum", "From", "To"})
-	for group, rs := range g {
+	for _, rg := range rgs {
 		var sum int64
-		for _, r := range rs {
+		for _, r := range rg.Records {
 			sum += r.Amount
 		}
-		row := []string{group, formatAmount(sum), since.Format("2006-01-02"), until.Format("2006-01-02")}
+		row := []string{rg.Name, formatAmount(sum), since.Format("2006-01-02"), until.Format("2006-01-02")}
 		table.Append(row)
 	}
 	table.Render()
 	return nil
 }
 
-func writeAll(w io.Writer, g map[string][]record.Record, since, until time.Time) error {
+func writeAll(w io.Writer, rgs []journal.RecordGroup) error {
 	table := tablewriter.NewWriter(w)
-	table.SetHeader([]string{"Account", "Account name", "Group", "Record", "Amount", "From", "To"})
-	for group, rs := range g {
-		for _, r := range rs {
+	table.SetHeader([]string{"Account", "Account name", "Date", "Record", "Amount", "Group"})
+	for _, rg := range rgs {
+		for _, r := range rg.Records {
 			row := []string{
 				r.Account.Number,
 				r.Account.Name,
-				group,
+				r.Time.Format("2006-01-02"),
 				r.Text,
 				formatAmount(r.Amount),
-				since.Format("2006-01-02"),
-				until.Format("2006-01-02"),
+				rg.Name,
 			}
 			table.Append(row)
 		}
