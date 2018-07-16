@@ -11,12 +11,15 @@ local banks), Storebrand, Bank Norwegian and Komplett Bank
 * Configurable grouping of records to identify spending habits
 * Persistent database of imported records
 
-## Examples
+## Example
 
-My bank account at *Example Bank* has the account number *1234.56.78900* and
-supports export of transactions to CSV.
+For the purposes of this example, a bank account exists at *Example Bank* with
+the account number *1234.56.78900*, and the bank supports export of records to
+CSV.
 
 ### Configuration
+
+The first step is to configure our bank accounts and match groups.
 
 `journal` uses the [TOML](https://github.com/toml-lang/toml) configuration
 format. By default, the program expects to find the configuration file in
@@ -55,17 +58,17 @@ If any of the patterns in `patterns` match, the group is considered a match.
 Matching follows the order declared in the configuration file, where the first
 matching group wins.
 
-### Example export file
+### Export file
 
-Most Norwegian banks support export to CSV. This can accomplished through your
-bank's web interface.
+Most Norwegian banks support export to CSV. This can usually be done through
+your bank's web interface.
 
 A CSV export typically looks like this:
 
 ```csv
-"01.05.2018";"01.02.2017";"Rema 1000";"-1.337,00";"3.663,00";"";""
-"10.06.2018";"10.03.2017";"Rema 1000";"-42,00";"3.621,00";"";""
-"15.07.2018";"20.04.2017";"Atb";"-42,00";"3.579,00";"";""
+"01.05.2018";"01.05.2018";"Rema 1000";"-1.337,00";"3.663,00";"";""
+"10.06.2018";"10.06.2018";"Rema 1000";"-42,00";"3.621,00";"";""
+"15.07.2018";"15.07.2018";"Atb";"-42,00";"3.579,00";"";""
 ```
 
 ### Importing records
@@ -79,7 +82,7 @@ journal: created 1 new account(s)
 journal: imported 3 new record(s)
 ```
 
-Imported records have now been persisted in a SQLite database located at
+Imported records have now been persisted in a SQLite database located in
 `/home/user/journal.db`.
 
 Repeating the import only imports records `journal` hasn't seen before, so
@@ -98,7 +101,7 @@ be specified when importing records. Example for *Bank Norwegian*:
 
 See `journal import -h` for complete usage.
  
-### List records
+### Listing records
 
 Now that we have imported records, they can be listed with `journal ls`:
 
@@ -111,9 +114,11 @@ $ journal ls
 +-----------------------+--------+------------+------------+
 ```
 
-By default, only records within the current month are listed. Records are
-grouped together according configured matching groups. If we want to understand
-why a record grouping, we can list individual records and their group:
+By default, only records within the current month are listed and sorted
+descending by sum.
+
+Records are grouped together according configured match groups. If we want to
+understand a record grouping, we can list individual records and their group:
 
 ```
 $ journal ls --explain
@@ -140,14 +145,16 @@ $ journal ls --since 2018-01-01
 Options can of course be combined:
 ```
 $ journal ls --since 2018-01-01 --explain
-+---------------+--------------+------------+-----------+----------+-----------------------+
-|    ACCOUNT    | ACCOUNT NAME |    DATE    |   TEXT    |  AMOUNT  |         GROUP         |
-+---------------+--------------+------------+-----------+----------+-----------------------+
-| 1234.56.78900 | Example Bank | 2018-06-10 | Rema 1000 | -42,00   | Groceries             |
-| 1234.56.78900 | Example Bank | 2018-05-01 | Rema 1000 | -1337,00 | Groceries             |
-| 1234.56.78900 | Example Bank | 2018-07-15 | Atb       | -42,00   | Public Transportation |
-+---------------+--------------+------------+-----------+----------+-----------------------+
++-----------------------+---------------+--------------+------------+-----------+----------+
+|         GROUP         |    ACCOUNT    | ACCOUNT NAME |    DATE    |   TEXT    |  AMOUNT  |
++-----------------------+---------------+--------------+------------+-----------+----------+
+| Groceries             | 1234.56.78900 | Example Bank | 2018-05-01 | Rema 1000 | -1337,00 |
+|                       |               |              | 2018-06-10 |           | -42,00   |
+| Public Transportation |               |              | 2018-07-15 | Atb       |          |
++-----------------------+---------------+--------------+------------+-----------+----------+
 ```
+
+Cells containing equal values are merged for increased readability. 
 
 See `journal ls -h` for complete usage.
 
