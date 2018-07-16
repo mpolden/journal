@@ -36,7 +36,7 @@ type List struct {
 	Explain bool   `short:"e" long:"explain" description:"Print all records and their group"`
 	Since   string `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
 	Until   string `short:"u" long:"until" description:"Print records until this date" value-name:"YYYY-MM-DD"`
-	Order   string `short:"o" long:"order" description:"Print records ordered by a specific field" choice:"sum" choice:"date" default:"sum"`
+	OrderBy string `short:"o" long:"order-by" description:"Print records ordered by a specific field" choice:"sum" choice:"date" choice:"name" default:"sum"`
 	Args    struct {
 		Account string `description:"Only print records for given account number" positional-arg-name:"account-number"`
 	} `positional-args:"yes"`
@@ -128,28 +128,40 @@ func (l *List) Execute(args []string) error {
 
 	rgs := j.Group(rs)
 
-	if l.Explain {
-		// Sort records in each group
-		for _, rg := range rgs {
-			sort.Slice(rg.Records, func(i, j int) bool {
-				if l.Order == "date" {
-					return rg.Records[i].Time.After(rg.Records[j].Time)
-				}
-				return rg.Records[i].Amount < rg.Records[j].Amount
-			})
-
-		}
-	} else {
-		if l.Order != "sum" {
-			return fmt.Errorf("grouped output cannot be sorted by date")
-		}
-		sort.Slice(rgs, func(i, j int) bool { return rgs[i].Sum() < rgs[j].Sum() })
+	if err := l.sort(rgs); err != nil {
+		return err
 	}
 
 	if l.Explain {
 		writeAll(os.Stdout, rgs)
 	} else {
 		writeGroups(os.Stdout, rgs, s, u)
+	}
+	return nil
+}
+
+func (l *List) sort(rgs []journal.RecordGroup) error {
+	switch l.OrderBy {
+	case "name":
+		break // default
+	case "sum":
+		sort.Slice(rgs, func(i, j int) bool { return rgs[i].Sum() < rgs[j].Sum() })
+	default:
+		if !l.Explain {
+			return fmt.Errorf("grouped output cannot be ordered by date")
+		}
+	}
+	// Sort records in each group
+	for _, rg := range rgs {
+		sort.Slice(rg.Records, func(i, j int) bool {
+			switch l.OrderBy {
+			case "name":
+				return rg.Records[i].Text < (rg.Records[j].Text)
+			case "date":
+				return rg.Records[i].Time.After(rg.Records[j].Time)
+			}
+			return rg.Records[i].Amount < rg.Records[j].Amount
+		})
 	}
 	return nil
 }
