@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 
@@ -35,6 +36,7 @@ type List struct {
 	Explain bool   `short:"e" long:"explain" description:"Print all records and their group"`
 	Since   string `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
 	Until   string `short:"u" long:"until" description:"Print records until this date" value-name:"YYYY-MM-DD"`
+	Order   string `short:"o" long:"order" description:"Print records ordered by a specific field" choice:"sum" choice:"date" default:"sum"`
 	Args    struct {
 		Account string `description:"Only print records for given account number" positional-arg-name:"account-number"`
 	} `positional-args:"yes"`
@@ -124,10 +126,30 @@ func (l *List) Execute(args []string) error {
 		return err
 	}
 
+	rgs := j.Group(rs)
+
 	if l.Explain {
-		writeAll(os.Stdout, j.Group(rs))
+		// Sort records in each group
+		for _, rg := range rgs {
+			sort.Slice(rg.Records, func(i, j int) bool {
+				if l.Order == "date" {
+					return rg.Records[i].Time.After(rg.Records[j].Time)
+				}
+				return rg.Records[i].Amount < rg.Records[j].Amount
+			})
+
+		}
 	} else {
-		writeGroups(os.Stdout, j.Group(rs), s, u)
+		if l.Order != "sum" {
+			return fmt.Errorf("grouped output cannot be sorted by date")
+		}
+		sort.Slice(rgs, func(i, j int) bool { return rgs[i].Sum() < rgs[j].Sum() })
+	}
+
+	if l.Explain {
+		writeAll(os.Stdout, rgs)
+	} else {
+		writeGroups(os.Stdout, rgs, s, u)
 	}
 	return nil
 }
@@ -146,7 +168,13 @@ func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time)
 		for _, r := range rg.Records {
 			sum += r.Amount
 		}
-		row := []string{rg.Name, formatAmount(sum), strconv.Itoa(len(rg.Records)), since.Format("2006-01-02"), until.Format("2006-01-02")}
+		row := []string{
+			rg.Name,
+			formatAmount(sum),
+			strconv.Itoa(len(rg.Records)),
+			since.Format("2006-01-02"),
+			until.Format("2006-01-02"),
+		}
 		table.Append(row)
 	}
 	table.Render()
@@ -154,16 +182,17 @@ func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time)
 
 func writeAll(w io.Writer, rgs []journal.RecordGroup) {
 	table := tablewriter.NewWriter(w)
-	table.SetHeader([]string{"Account", "Account name", "Date", "Text", "Amount", "Group"})
+	table.SetHeader([]string{"Group", "Account", "Account name", "Date", "Text", "Amount"})
+	table.SetAutoMergeCells(true)
 	for _, rg := range rgs {
 		for _, r := range rg.Records {
 			row := []string{
+				rg.Name,
 				r.Account.Number,
 				r.Account.Name,
 				r.Time.Format("2006-01-02"),
 				r.Text,
 				formatAmount(r.Amount),
-				rg.Name,
 			}
 			table.Append(row)
 		}

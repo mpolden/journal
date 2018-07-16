@@ -178,3 +178,11 @@ func (j *Journal) findGroup(r record.Record) *Group {
 	}
 	return &Group{Name: "*** UNMATCHED ***"}
 }
+
+func (rg *RecordGroup) Sum() int64 {
+	var sum int64
+	for _, r := range rg.Records {
+		sum += r.Amount
+	}
+	return sum
+}
