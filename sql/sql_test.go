@@ -20,10 +20,10 @@ func date(year int, month time.Month, day int) time.Time {
 func TestAddAccounts(t *testing.T) {
 	c := testClient()
 	accounts := []Account{
-		{Number: "1.2.3", Description: "Account 1"},
-		{Number: "4.5.6", Description: "Account 2"},
-		{Number: "7.8.9", Description: "Account 3"},
-		{Number: "1.2.3", Description: "Account 1"}, // Duplicate
+		{Number: "1.2.3", Name: "Account 1"},
+		{Number: "4.5.6", Name: "Account 2"},
+		{Number: "7.8.9", Name: "Account 3"},
+		{Number: "1.2.3", Name: "Account 1"}, // Duplicate
 	}
 	n, err := c.AddAccounts(accounts)
 	if err != nil {
@@ -40,7 +40,7 @@ func TestAddAccounts(t *testing.T) {
 		if accounts[i].Number != a.Number {
 			t.Errorf("want Number = %s, got %s", accounts[i].Number, a.Number)
 		}
-		if accounts[i].Description != a.Description {
+		if accounts[i].Name != a.Name {
 			t.Errorf("want Number = %s, got %s", accounts[i].Number, a.Number)
 		}
 	}
@@ -49,16 +49,16 @@ func TestAddAccounts(t *testing.T) {
 func TestAddRecords(t *testing.T) {
 	c := testClient()
 	number := "1.2.3"
-	as := []Account{{Number: number, Description: "Savings"}}
+	as := []Account{{Number: number, Name: "Savings"}}
 	if _, err := c.AddAccounts(as); err != nil {
 		t.Fatal(err)
 	}
 	records := []Record{
-		{Time: date(2017, 4, 20).Unix(), Text: "Transaction 4", Amount: 5678},
-		{Time: date(2017, 3, 15).Unix(), Text: "Transaction 3", Amount: 24},
-		{Time: date(2017, 2, 10).Unix(), Text: "Transaction 2", Amount: 1234},
-		{Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42},
-		{Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42}, // Duplicate, ignored
+		{Account: as[0], Time: date(2017, 4, 20).Unix(), Text: "Transaction 4", Amount: 5678},
+		{Account: as[0], Time: date(2017, 3, 15).Unix(), Text: "Transaction 3", Amount: 24},
+		{Account: as[0], Time: date(2017, 2, 10).Unix(), Text: "Transaction 2", Amount: 1234},
+		{Account: as[0], Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42},
+		{Account: as[0], Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42}, // Duplicate, ignored
 	}
 	n, err := c.AddRecords(number, records)
 	if err != nil {
@@ -75,11 +75,17 @@ func TestAddRecords(t *testing.T) {
 		t.Errorf("want len = %d, got %d", want, got)
 	}
 	for i, r := range rs {
+		if records[i].Account.Number != r.Account.Number {
+			t.Errorf("want Account.Number = %q, got %q", records[i].Account.Number, r.Account.Number)
+		}
+		if records[i].Account.Name != r.Account.Name {
+			t.Errorf("want Account.Name = %q, got %q", records[i].Account.Name, r.Account.Name)
+		}
 		if records[i].Time != r.Time {
 			t.Errorf("want Time = %d, got %d", records[i].Time, r.Time)
 		}
 		if records[i].Text != r.Text {
-			t.Errorf("want Text = %s, got %s", records[i].Text, r.Text)
+			t.Errorf("want Text = %q, got %q", records[i].Text, r.Text)
 		}
 		if records[i].Amount != r.Amount {
 			t.Errorf("want Amount = %d, got %d", records[i].Amount, r.Amount)

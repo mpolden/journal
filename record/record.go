@@ -22,9 +22,15 @@ type Reader interface {
 	Read() ([]Record, error)
 }
 
+// Account identifies a finanical account.
+type Account struct {
+	Number string
+	Name   string
+}
+
 // Record contains details of a finanical record.
 type Record struct {
-	Account string
+	Account Account
 	Time    time.Time
 	Text    string
 	Amount  int64

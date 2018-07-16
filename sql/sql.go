@@ -14,7 +14,7 @@ const schema = `
 CREATE TABLE IF NOT EXISTS account (
   id INTEGER PRIMARY KEY,
   number TEXT NOT NULL,
-  description TEXT,
+  name TEXT NOT NULL,
   CONSTRAINT number_unique UNIQUE (number)
 );
 
@@ -37,8 +37,8 @@ type Client struct {
 }
 
 type Account struct {
-	Number      string `db:"number"`
-	Description string `db:"description"`
+	Number string `db:"number"`
+	Name   string `db:"name"`
 }
 
 type Record struct {
@@ -89,7 +89,7 @@ func (c *Client) AddAccounts(accounts []Account) (int64, error) {
 		if count > 0 {
 			continue
 		}
-		res, err := tx.Exec("INSERT INTO account (number, description) VALUES ($1, $2)", a.Number, a.Description)
+		res, err := tx.Exec("INSERT INTO account (number, name) VALUES ($1, $2)", a.Number, a.Name)
 		if err != nil {
 			return 0, err
 		}
@@ -102,7 +102,7 @@ func (c *Client) SelectAccounts(number string) ([]Account, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	var as []Account
-	query := "SELECT number, description FROM account"
+	query := "SELECT number, name FROM account"
 	args := []interface{}{}
 	if number != "" {
 		query += " WHERE number = ?"
@@ -165,7 +165,8 @@ func (c *Client) SelectRecordsBetween(accountNumber string, since, until time.Ti
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	query := `
-SELECT description, time, text, amount FROM record
+SELECT name, number, time, text, amount
+FROM record
 INNER JOIN account ON account_id = account.id
 `
 	args := []interface{}{}

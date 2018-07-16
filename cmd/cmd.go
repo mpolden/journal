@@ -140,11 +140,12 @@ func writeGrouped(w io.Writer, g map[string][]record.Record, since, until time.T
 
 func writeAll(w io.Writer, g map[string][]record.Record, since, until time.Time) error {
 	table := tablewriter.NewWriter(w)
-	table.SetHeader([]string{"Account number", "Group", "Record", "Amount", "From", "To"})
+	table.SetHeader([]string{"Account", "Account name", "Group", "Record", "Amount", "From", "To"})
 	for group, rs := range g {
 		for _, r := range rs {
 			row := []string{
-				r.Account,
+				r.Account.Number,
+				r.Account.Name,
 				group,
 				r.Text,
 				formatAmount(r.Amount),

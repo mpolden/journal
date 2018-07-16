@@ -13,7 +13,7 @@ func testJournal(t *testing.T) *Journal {
 Database = ":memory:"
 [[accounts]]
 number = "1234.56.78900"
-description = "My account"
+name = "My account"
 
 [[groups]]
 name = "Travel"

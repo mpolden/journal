@@ -14,8 +14,8 @@ import (
 )
 
 type Account struct {
-	Number      string
-	Description string
+	Number string
+	Name   string
 }
 
 type Group struct {
@@ -110,7 +110,7 @@ func New(conf Config) (*Journal, error) {
 func (j *Journal) writeAccounts() (int64, error) {
 	as := make([]sql.Account, len(j.accounts))
 	for i, a := range j.accounts {
-		as[i] = sql.Account{Number: a.Number, Description: a.Description}
+		as[i] = sql.Account{Number: a.Number, Name: a.Name}
 	}
 	return j.db.AddAccounts(as)
 }
@@ -139,7 +139,7 @@ func (j *Journal) Read(accountNumber string, since, until time.Time) ([]record.R
 	records := make([]record.Record, len(rs))
 	for i, r := range rs {
 		records[i] = record.Record{
-			Account: r.Account.Description,
+			Account: record.Account{Number: r.Account.Number, Name: r.Account.Name},
 			Time:    time.Unix(r.Time, 0),
 			Text:    r.Text,
 			Amount:  r.Amount,
