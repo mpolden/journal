@@ -160,12 +160,10 @@ $ journal ls --since 2018-01-01 --explain
 |         GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    |  AMOUNT  |
 +-----------------------+---------------+--------------+------------+------------+-----------+----------+
 | Groceries             | 1234.56.78900 | Example Bank | 51116a3a38 | 2018-05-01 | Rema 1000 | -1337,00 |
-|                       |               |              | eaacbfe8ed | 2018-06-10 |           | -42,00   |
-| Public Transportation |               |              | c18225b0c9 | 2018-07-15 | Atb       |          |
+| Groceries             | 1234.56.78900 | Example Bank | eaacbfe8ed | 2018-06-10 | Rema 1000 | -42,00   |
+| Public Transportation | 1234.56.78900 | Example Bank | c18225b0c9 | 2018-07-15 | Atb       | -42,00   |
 +-----------------------+---------------+--------------+------------+------------+-----------+----------+
 ```
-
-Cells containing equal values are merged for increased readability. 
 
 See `journal ls -h` for complete usage.
 

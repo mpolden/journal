@@ -177,7 +177,6 @@ func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time)
 func writeAll(w io.Writer, rgs []journal.RecordGroup) {
 	table := tablewriter.NewWriter(w)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
-	table.SetAutoMergeCells(true)
 	for _, rg := range rgs {
 		for _, r := range rg.Records {
 			row := []string{
