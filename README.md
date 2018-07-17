@@ -8,7 +8,8 @@
 
 * Import records from multiple Norwegian banks, such as Eika Group (including
 local banks), Storebrand, Bank Norwegian and Komplett Bank
-* Configurable grouping of records to identify spending habits
+* Identify spending habits using automatic grouping of records
+* Export grouped records for further processing in other programs
 * Persistent database of imported records
 
 ## Example
