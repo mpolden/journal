@@ -17,6 +17,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	export := cmd.Export{Log: log}
+	if _, err := p.AddCommand("export", "Export records", "Export records to CSV.", &export); err != nil {
+		log.Fatal(err)
+	}
+
 	list := cmd.List{Log: log}
 	if _, err := p.AddCommand("ls", "List records", "Display records in database", &list); err != nil {
 		log.Fatal(err)

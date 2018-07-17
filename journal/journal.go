@@ -1,16 +1,20 @@
 package journal
 
 import (
+	"encoding/csv"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/mpolden/journal/record"
+	"github.com/mpolden/journal/record/komplett"
+	"github.com/mpolden/journal/record/norwegian"
 	"github.com/mpolden/journal/sql"
 )
 
@@ -115,12 +119,47 @@ func New(conf Config) (*Journal, error) {
 	}, nil
 }
 
+func FormatAmount(n int64) string {
+	s := strconv.FormatInt(n, 10)
+	off := len(s) - 2
+	return s[:off] + "," + s[off:]
+}
+
 func (j *Journal) writeAccounts() (int64, error) {
 	as := make([]sql.Account, len(j.accounts))
 	for i, a := range j.accounts {
 		as[i] = sql.Account{Number: a.Number, Name: a.Name}
 	}
 	return j.db.AddAccounts(as)
+}
+
+func (j *Journal) ReadFrom(readerName string, r io.Reader) ([]record.Record, error) {
+	var rr record.Reader
+	switch readerName {
+	case "csv":
+		rr = record.NewReader(r)
+	case "komplett":
+		rr = komplett.NewReader(r)
+	case "norwegian":
+		rr = norwegian.NewReader(r)
+	default:
+		return nil, fmt.Errorf("invalid reader: %q", readerName)
+	}
+	return rr.Read()
+}
+
+func (j *Journal) Export(w io.Writer, groupedRecords map[string][]RecordGroup) error {
+	csv := csv.NewWriter(w)
+	for k, rgs := range groupedRecords {
+		for _, rg := range rgs {
+			r := []string{k, rg.Name, FormatAmount(rg.Sum())}
+			if err := csv.Write(r); err != nil {
+				return err
+			}
+		}
+	}
+	csv.Flush()
+	return csv.Error()
 }
 
 func (j *Journal) Write(accountNumber string, records []record.Record) (Writes, error) {
@@ -167,6 +206,19 @@ func (j *Journal) Group(rs []record.Record) []RecordGroup {
 		rgs = append(rgs, RecordGroup{Name: name, Records: rs})
 	}
 	sort.Slice(rgs, func(i, j int) bool { return rgs[i].Name < rgs[j].Name })
+	return rgs
+}
+
+func (j *Journal) GroupFunc(rs []record.Record, keyFn func(time.Time) string) map[string][]RecordGroup {
+	m := make(map[string][]record.Record)
+	for _, r := range rs {
+		key := keyFn(r.Time)
+		m[key] = append(m[key], r)
+	}
+	rgs := make(map[string][]RecordGroup)
+	for k, rs := range m {
+		rgs[k] = j.Group(rs)
+	}
 	return rgs
 }
 

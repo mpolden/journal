@@ -10,9 +10,6 @@ import (
 	"time"
 
 	"github.com/mpolden/journal/journal"
-	"github.com/mpolden/journal/record"
-	"github.com/mpolden/journal/record/komplett"
-	"github.com/mpolden/journal/record/norwegian"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -30,6 +27,16 @@ type Import struct {
 	} `positional-args:"yes" required:"yes"`
 }
 
+type Export struct {
+	globalOpts
+	Log   *log.Logger
+	Since string `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
+	Until string `short:"u" long:"until" description:"Print records until this date" value-name:"YYYY-MM-DD"`
+	Args  struct {
+		Account string `description:"Account number" positional-arg-name:"account-number"`
+	} `positional-args:"yes"`
+}
+
 type List struct {
 	globalOpts
 	Log     *log.Logger
@@ -43,12 +50,18 @@ type List struct {
 }
 
 func (i *Import) Execute(args []string) error {
+	f, err := os.Open(i.Args.File)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
 	j, err := journal.FromConfig(i.Config)
 	if err != nil {
 		return err
 	}
 
-	rs, err := i.readRecords()
+	rs, err := j.ReadFrom(i.Reader, f)
 	if err != nil {
 		return err
 	}
@@ -59,27 +72,6 @@ func (i *Import) Execute(args []string) error {
 	return err
 }
 
-func (i *Import) readRecords() ([]record.Record, error) {
-	f, err := os.Open(i.Args.File)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	var r record.Reader
-	switch i.Reader {
-	case "csv":
-		r = record.NewReader(f)
-	case "komplett":
-		r = komplett.NewReader(f)
-	case "norwegian":
-		r = norwegian.NewReader(f)
-	default:
-		return nil, fmt.Errorf("invalid reader: %q", i.Reader)
-	}
-	return r.Read()
-}
-
 func parseTime(s string) (time.Time, error) {
 	if s == "" {
 		return time.Time{}, nil
@@ -87,18 +79,23 @@ func parseTime(s string) (time.Time, error) {
 	return time.Parse("2006-01-02", s)
 }
 
-func since(now, t time.Time) time.Time {
-	if t.IsZero() { // Default to start of month
-		t = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+func timeRange(since, until string) (time.Time, time.Time, error) {
+	now := time.Now()
+	s, err := parseTime(since)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
 	}
-	return t
-}
-
-func until(now, t time.Time) time.Time {
-	if t.IsZero() { // Default to current day
-		t = now
+	u, err := parseTime(until)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
 	}
-	return t
+	if s.IsZero() { // Default to start of month
+		s = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	}
+	if u.IsZero() {
+		u = now
+	}
+	return s, u, nil
 }
 
 func (l *List) Execute(args []string) error {
@@ -107,19 +104,10 @@ func (l *List) Execute(args []string) error {
 		return err
 	}
 
-	now := time.Now()
-
-	s, err := parseTime(l.Since)
+	s, u, err := timeRange(l.Since, l.Until)
 	if err != nil {
 		return err
 	}
-	s = since(now, s)
-
-	u, err := parseTime(l.Until)
-	if err != nil {
-		return err
-	}
-	u = until(now, u)
 
 	rs, err := j.Read(l.Args.Account, s, u)
 	if err != nil {
@@ -166,12 +154,6 @@ func (l *List) sort(rgs []journal.RecordGroup) error {
 	return nil
 }
 
-func formatAmount(n int64) string {
-	s := strconv.FormatInt(n, 10)
-	off := len(s) - 2
-	return s[:off] + "," + s[off:]
-}
-
 func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time) {
 	table := tablewriter.NewWriter(w)
 	table.SetHeader([]string{"Group", "Sum", "Records", "From", "To"})
@@ -182,7 +164,7 @@ func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time)
 		}
 		row := []string{
 			rg.Name,
-			formatAmount(sum),
+			journal.FormatAmount(sum),
 			strconv.Itoa(len(rg.Records)),
 			since.Format("2006-01-02"),
 			until.Format("2006-01-02"),
@@ -205,10 +187,30 @@ func writeAll(w io.Writer, rgs []journal.RecordGroup) {
 				r.ID(),
 				r.Time.Format("2006-01-02"),
 				r.Text,
-				formatAmount(r.Amount),
+				journal.FormatAmount(r.Amount),
 			}
 			table.Append(row)
 		}
 	}
 	table.Render()
+}
+
+func (e *Export) Execute(args []string) error {
+	j, err := journal.FromConfig(e.Config)
+	if err != nil {
+		return err
+	}
+
+	s, u, err := timeRange(e.Since, e.Until)
+	if err != nil {
+		return err
+	}
+
+	rs, err := j.Read(e.Args.Account, s, u)
+	if err != nil {
+		return err
+	}
+
+	byMonth := j.GroupFunc(rs, func(t time.Time) string { return t.Format("2006-01") })
+	return j.Export(os.Stdout, byMonth)
 }
