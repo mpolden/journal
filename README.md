@@ -192,11 +192,3 @@ $ journal export --since 2018-01-01
 ```
 
 See `journal export -h` for complete usage.
-
-## Design
-
-* `cmd` contains the command line interface
-* `journal` contains logic for importing and displaying records. This is the
-  bridge between `cmd` and `record` / `sql`.
-* `record` contains record parsers for various banks
-* `sql` contains the persistence layer
