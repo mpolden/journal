@@ -13,13 +13,14 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-type globalOpts struct {
+type Options struct {
 	Config string `short:"f" long:"config" description:"Config file" value-name:"FILE" default:"~/.journalrc"`
+	Writer io.Writer
+	Log    *log.Logger
 }
 
 type Import struct {
-	globalOpts
-	Log    *log.Logger
+	Options
 	Reader string `short:"r" long:"reader" description:"Name of reader to use when importing data" choice:"csv" choice:"komplett" choice:"norwegian" default:"csv"`
 	Args   struct {
 		Account string `description:"Account number" positional-arg-name:"account-number"`
@@ -28,8 +29,7 @@ type Import struct {
 }
 
 type Export struct {
-	globalOpts
-	Log   *log.Logger
+	Options
 	Since string `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
 	Until string `short:"u" long:"until" description:"Print records until this date" value-name:"YYYY-MM-DD"`
 	Args  struct {
@@ -38,8 +38,7 @@ type Export struct {
 }
 
 type List struct {
-	globalOpts
-	Log     *log.Logger
+	Options
 	Explain bool   `short:"e" long:"explain" description:"Print all records and their group"`
 	Since   string `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
 	Until   string `short:"u" long:"until" description:"Print records until this date" value-name:"YYYY-MM-DD"`
@@ -121,9 +120,9 @@ func (l *List) Execute(args []string) error {
 	}
 
 	if l.Explain {
-		writeAll(os.Stdout, rgs)
+		l.printAll(rgs)
 	} else {
-		writeGroups(os.Stdout, rgs, s, u)
+		l.printGroups(rgs, s, u)
 	}
 	return nil
 }
@@ -154,8 +153,8 @@ func (l *List) sort(rgs []journal.RecordGroup) error {
 	return nil
 }
 
-func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time) {
-	table := tablewriter.NewWriter(w)
+func (l *List) printGroups(rgs []journal.RecordGroup, since, until time.Time) {
+	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Sum", "Records", "From", "To"})
 	table.SetBorder(false)
 	for _, rg := range rgs {
@@ -175,8 +174,8 @@ func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time)
 	table.Render()
 }
 
-func writeAll(w io.Writer, rgs []journal.RecordGroup) {
-	table := tablewriter.NewWriter(w)
+func (l *List) printAll(rgs []journal.RecordGroup) {
+	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
 	table.SetBorder(false)
 	for _, rg := range rgs {
@@ -213,5 +212,5 @@ func (e *Export) Execute(args []string) error {
 	}
 
 	byMonth := j.GroupFunc(rs, func(t time.Time) string { return t.Format("2006-01") })
-	return j.Export(os.Stdout, byMonth)
+	return j.Export(e.Writer, byMonth)
 }
