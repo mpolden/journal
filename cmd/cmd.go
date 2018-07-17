@@ -236,8 +236,8 @@ func (e *Export) Execute(args []string) error {
 		return err
 	}
 
-	byMonth := j.GroupFunc(rs, func(r record.Record) string {
-		return r.Time.Format("2006-01")
+	periods := j.AssortPeriod(rs, func(t time.Time) time.Time {
+		return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
 	})
-	return journal.Export(e.Writer, byMonth)
+	return journal.Export(e.Writer, periods, "2006-01")
 }

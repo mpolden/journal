@@ -1,6 +1,7 @@
 package record
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -84,6 +85,72 @@ func TestID(t *testing.T) {
 	for i, tt := range tests {
 		if got := tt.r.ID(); got != tt.id {
 			t.Errorf("#%d: want ID = %q, got %q", i, tt.id, got)
+		}
+	}
+}
+
+func TestAssortFunc(t *testing.T) {
+	rs := []Record{
+		{Time: date(2017, 1, 1), Text: "Foo", Amount: 42},
+		{Time: date(2017, 1, 1), Text: "Bar", Amount: 42},
+		{Time: date(2017, 1, 1), Text: "Baz", Amount: 42},
+	}
+	gs := AssortFunc(rs, func(r Record) (bool, string) {
+		switch r.Text {
+		case "Foo":
+			return true, "A"
+		case "Bar":
+			return true, "B"
+		default:
+			return false, ""
+		}
+	})
+	var tests = []struct {
+		g Group
+	}{
+		{Group{Name: "A", Records: rs[0:1]}},
+		{Group{Name: "B", Records: rs[1:2]}},
+	}
+	if want, got := len(gs), len(tests); want != got {
+		t.Errorf("want len = %d, got %d", want, got)
+	}
+	for i, tt := range tests {
+		if want, got := tt.g.Name, gs[i].Name; want != got {
+			t.Errorf("#%d: want Name = %q, got %q", i, want, got)
+		}
+		if !reflect.DeepEqual(gs[i].Records, tt.g.Records) {
+			t.Errorf("#%d: want Records = %+v, got %+v", i, tt.g.Records, gs[i].Records)
+		}
+	}
+}
+
+func TestAssortPeriodFunc(t *testing.T) {
+	rs := []Record{
+		{Time: date(2017, 1, 10), Text: "Foo", Amount: 42},
+		{Time: date(2017, 2, 20), Text: "Bar", Amount: 42},
+		{Time: date(2017, 3, 30), Text: "Baz", Amount: 42},
+	}
+	ps := AssortPeriodFunc(rs,
+		func(t time.Time) time.Time {
+			return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
+		},
+		func(r Record) (bool, string) {
+			return true, "A"
+		})
+
+	var tests = []struct {
+		p Period
+	}{
+		{Period{Time: date(2017, 3, 1), Groups: []Group{{Name: "A", Records: []Record{rs[2]}}}}},
+		{Period{Time: date(2017, 2, 1), Groups: []Group{{Name: "A", Records: []Record{rs[1]}}}}},
+		{Period{Time: date(2017, 1, 1), Groups: []Group{{Name: "A", Records: []Record{rs[0]}}}}},
+	}
+	if want, got := len(ps), len(tests); want != got {
+		t.Errorf("want len = %d, got %d", want, got)
+	}
+	for i, tt := range tests {
+		if !reflect.DeepEqual(ps[i], tt.p) {
+			t.Errorf("#%d: want Period = %+v, got %+v", i, tt.p, ps[i])
 		}
 	}
 }

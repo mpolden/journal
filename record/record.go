@@ -26,13 +26,13 @@ type Reader interface {
 	Read() ([]Record, error)
 }
 
-// Account identifies a finanical account.
+// An Account identifies a finanical account.
 type Account struct {
 	Number string
 	Name   string
 }
 
-// Record contains details of a finanical record.
+// A Record is a record of a finanical transaction.
 type Record struct {
 	Account Account
 	Time    time.Time
@@ -40,10 +40,16 @@ type Record struct {
 	Amount  int64
 }
 
-// Group contains a group of records
+// A Group is a list of recordes grouped together under a common name.
 type Group struct {
 	Name    string
 	Records []Record
+}
+
+// A Period stores record groups for specific moment in time.
+type Period struct {
+	Time   time.Time
+	Groups []Group
 }
 
 type defaultReader struct {
@@ -78,36 +84,37 @@ func (g *Group) Sum() int64 {
 	return sum
 }
 
-// AssortFunc uses groupFn to assort records into groups
+// AssortFunc uses groupFn to assort records into groups.
 func AssortFunc(records []Record, assortFn func(Record) (bool, string)) []Group {
-	groups := make(map[string][]Record)
+	m := make(map[string][]Record)
 	for _, r := range records {
 		ok, key := assortFn(r)
 		if !ok {
 			continue
 		}
-		groups[key] = append(groups[key], r)
-	}
-	var rgs []Group
-	for name, rs := range groups {
-		rgs = append(rgs, Group{Name: name, Records: rs})
-	}
-	sort.Slice(rgs, func(i, j int) bool { return rgs[i].Name < rgs[j].Name })
-	return rgs
-}
-
-// GroupFunc uses keyFn and assortFn to group record groups
-func GroupFunc(records []Record, keyFn func(Record) string, assortFn func(Record) (bool, string)) map[string][]Group {
-	m := make(map[string][]Record)
-	for _, r := range records {
-		key := keyFn(r)
 		m[key] = append(m[key], r)
 	}
-	rgs := make(map[string][]Group)
-	for k, rs := range m {
-		rgs[k] = AssortFunc(rs, assortFn)
+	var gs []Group
+	for name, rs := range m {
+		gs = append(gs, Group{Name: name, Records: rs})
 	}
-	return rgs
+	sort.Slice(gs, func(i, j int) bool { return gs[i].Name < gs[j].Name })
+	return gs
+}
+
+// AssortPeriodFunc assorts records into groups grouped by timeFn.
+func AssortPeriodFunc(records []Record, timeFn func(time.Time) time.Time, assortFn func(Record) (bool, string)) []Period {
+	m := make(map[time.Time][]Record)
+	for _, r := range records {
+		key := timeFn(r.Time)
+		m[key] = append(m[key], r)
+	}
+	var ps []Period
+	for t, rs := range m {
+		ps = append(ps, Period{Time: t, Groups: AssortFunc(rs, assortFn)})
+	}
+	sort.Slice(ps, func(i, j int) bool { return ps[i].Time.After(ps[j].Time) })
+	return ps
 }
 
 func (d *defaultReader) parseAmount(s string) (int64, error) {

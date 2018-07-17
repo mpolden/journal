@@ -120,11 +120,11 @@ func FormatAmount(n int64) string {
 	return s[:off] + "," + s[off:]
 }
 
-func Export(w io.Writer, groupedRecords map[string][]record.Group) error {
+func Export(w io.Writer, periods []record.Period, timeLayout string) error {
 	csv := csv.NewWriter(w)
-	for k, rgs := range groupedRecords {
-		for _, rg := range rgs {
-			r := []string{k, rg.Name, FormatAmount(rg.Sum())}
+	for _, p := range periods {
+		for _, rg := range p.Groups {
+			r := []string{p.Time.Format(timeLayout), rg.Name, FormatAmount(rg.Sum())}
 			if err := csv.Write(r); err != nil {
 				return err
 			}
@@ -175,12 +175,14 @@ func (j *Journal) Read(accountNumber string, since, until time.Time) ([]record.R
 	return records, nil
 }
 
+// Assorts assorts records into groups using this journal's configuration.
 func (j *Journal) Assort(records []record.Record) []record.Group {
 	return record.AssortFunc(records, j.findGroup)
 }
 
-func (j *Journal) GroupFunc(records []record.Record, keyFn func(record.Record) string) map[string][]record.Group {
-	return record.GroupFunc(records, keyFn, j.findGroup)
+// AssortPeriod assorts record groups into time periods using timeFn.
+func (j *Journal) AssortPeriod(records []record.Record, timeFn func(time.Time) time.Time) []record.Period {
+	return record.AssortPeriodFunc(records, timeFn, j.findGroup)
 }
 
 func (j *Journal) findGroup(r record.Record) (bool, string) {
