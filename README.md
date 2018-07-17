@@ -48,6 +48,11 @@ ids = [
   "deadbeef",
   "cafebabe",
 ]
+
+[[groups]]
+name = "Ignored records"
+pattern = ["^Spam"]
+discard = true
 ```
 
 `Database` specifies where the SQLite database containing our records should be
