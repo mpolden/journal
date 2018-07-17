@@ -12,6 +12,19 @@ local banks), Storebrand, Bank Norwegian and Komplett Bank
 * Export grouped records for further processing in other programs
 * Persistent database of imported records
 
+## Installation
+
+Building and installing `journal` requires the [Golang
+compiler](https://golang.org/). With Go installed, `journal` can be installed
+with:
+
+`go get github.com/mpolden/journal/...`
+
+This will build and install `journal` in `$GOPATH/bin/journal`.
+
+For more information on building a Go project, see the [official Go
+documentation](https://golang.org/doc/code.html).
+
 ## Example
 
 For the purposes of this example, a bank account exists at *Example Bank* with
