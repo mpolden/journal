@@ -164,6 +164,21 @@ $ journal ls --since 2018-01-01 --explain
 
 See `journal ls -h` for complete usage.
 
+### Export records
+
+Record groups can be exported to
+[CSV](https://en.wikipedia.org/wiki/Comma-separated_values) for further
+processing in other programs such as a spreadsheet.
+
+```
+$ journal export --since 2018-01-01
+2018-07,Public Transportation,"-42,00"
+2018-06,Groceries,"-42,00"
+2018-05,Groceries,"-1337,00"
+```
+
+See `journal export -h` for complete usage.
+
 ## Design
 
 * `cmd` contains the command line interface
