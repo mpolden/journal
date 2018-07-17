@@ -22,7 +22,7 @@ type Options struct {
 
 type Import struct {
 	Options
-	Reader string `short:"r" long:"reader" description:"Name of reader to use when importing data" choice:"csv" choice:"komplett" choice:"norwegian" default:"csv"`
+	Reader string `short:"r" long:"reader" description:"Name of reader to use when importing data" choice:"csv" choice:"komplett" choice:"komplettsparing" choice:"norwegian" default:"csv"`
 	Args   struct {
 		Account string `description:"Account number" positional-arg-name:"account-number"`
 		File    string `description:"File containing records to import" positional-arg-name:"import-file"`

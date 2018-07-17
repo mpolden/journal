@@ -134,8 +134,10 @@ func (j *Journal) ReadFrom(readerName string, r io.Reader) ([]record.Record, err
 	switch readerName {
 	case "csv":
 		rr = record.NewReader(r)
-	case "komplett":
-		rr = komplett.NewReader(r)
+	case "komplett", "komplettsparing":
+		kr := komplett.NewReader(r)
+		kr.JSON = readerName == "komplettsparing"
+		rr = kr
 	case "norwegian":
 		rr = norwegian.NewReader(r)
 	default:
