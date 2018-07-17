@@ -2,7 +2,10 @@ package record
 
 import (
 	"bufio"
+	"bytes"
+	"crypto/sha1"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -46,6 +49,17 @@ func NewReader(rd io.Reader) Reader {
 		rd:       rd,
 		replacer: strings.NewReplacer(decimalSeparator, "", thousandSeparator, ""),
 	}
+}
+
+// ID returns a shortened SHA-1 hash of the fields in this record
+func (r *Record) ID() string {
+	var buf bytes.Buffer
+	buf.WriteString(r.Account.Number)
+	buf.WriteString(r.Time.Format("2006-01-02"))
+	buf.WriteString(r.Text)
+	buf.WriteString(strconv.FormatInt(r.Amount, 10))
+	sum := sha1.Sum(buf.Bytes())
+	return fmt.Sprintf("%x", sum)[:10]
 }
 
 func (d *defaultReader) parseAmount(s string) (int64, error) {

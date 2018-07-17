@@ -34,7 +34,7 @@ func testReadFrom(lines string, t *testing.T) {
 			t.Errorf("#%d: want Time = %s, got %s", i, tt.t, rs[i].Time)
 		}
 		if rs[i].Text != tt.text {
-			t.Errorf("#%d: want Text = %s, got %s", i, tt.text, rs[i].Text)
+			t.Errorf("#%d: want Text = %q, got %q", i, tt.text, rs[i].Text)
 		}
 		if rs[i].Amount != tt.amount {
 			t.Errorf("#%d: want Amount = %d, got %d", i, tt.amount, rs[i].Amount)
@@ -49,4 +49,41 @@ func TestReadFrom(t *testing.T) {
 `
 	testReadFrom(lines, t)
 	testReadFrom(string(byteOrderMark)+lines, t)
+}
+
+func TestID(t *testing.T) {
+	var tests = []struct {
+		r  Record
+		id string
+	}{
+		{Record{
+			Account: Account{Number: "1.2.3"},
+			Time:    date(2017, 1, 1),
+			Text:    "Transaction 1",
+			Amount:  42,
+		}, "f4fb9cb746"},
+		{Record{
+			Account: Account{Number: "1.2.4"},
+			Time:    date(2017, 1, 1),
+			Text:    "Transaction 1",
+			Amount:  42,
+		}, "3618a31f3c"},
+		{Record{
+			Account: Account{Number: "1.2.4"},
+			Time:    date(2018, 1, 1),
+			Text:    "Transaction 1",
+			Amount:  42,
+		}, "857bb800c9"},
+		{Record{
+			Account: Account{Number: "1.2.4"},
+			Time:    date(2018, 1, 1),
+			Text:    "Transaction 2",
+			Amount:  42,
+		}, "2c07328f92"},
+	}
+	for i, tt := range tests {
+		if got := tt.r.ID(); got != tt.id {
+			t.Errorf("#%d: want ID = %q, got %q", i, tt.id, got)
+		}
+	}
 }
