@@ -18,7 +18,11 @@ func testJournal(t *testing.T) *Journal {
 Database = ":memory:"
 [[accounts]]
 number = "1234.56.78900"
-name = "My account"
+name = "My account 1"
+
+[[accounts]]
+number = "1234.56.78901"
+name = "My account 2"
 
 [[groups]]
 name = "Travel"
@@ -31,6 +35,11 @@ patterns = ["^Bar", "^Baz"]
 [[groups]]
 name = "Misc"
 ids = ["45defdf469"]
+
+[[groups]]
+name = "Other"
+account = "1234.56.78901"
+patterns = ["^Boo"]
 `
 	conf, err := readConfig(strings.NewReader(tomlConf))
 	if err != nil {
@@ -51,7 +60,7 @@ func TestWrite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want, got := int64(1), writes.Account; want != got {
+	if want, got := int64(2), writes.Account; want != got {
 		t.Errorf("want %d account writes, got %d", want, got)
 	}
 	if want, got := int64(1), writes.Record; want != got {
@@ -61,26 +70,33 @@ func TestWrite(t *testing.T) {
 
 func TestGroup(t *testing.T) {
 	j := testJournal(t)
-	account := record.Account{Number: "1234.56.78900", Name: "My account"}
+	a1 := record.Account{Number: "1234.56.78900", Name: "My account 1"}
+	a2 := record.Account{Number: "1234.56.78901", Name: "My account 2"}
 	rs := []record.Record{
-		{Account: account, Time: date(2018, 2, 2), Text: "Foo 1", Amount: 42},
-		{Account: account, Time: date(2018, 1, 1), Text: "Foo 2", Amount: 42},
-		{Account: account, Time: date(2018, 2, 2), Text: "Bar 1", Amount: 42},
-		{Account: account, Time: date(2018, 1, 1), Text: "Baz 1", Amount: 42},
-		{Account: account, Time: date(2018, 1, 1), Text: "Bar 2", Amount: 42}, // Pinned record
+		{Account: a1, Time: date(2018, 2, 2), Text: "Foo 1", Amount: 42}, // Travel
+		{Account: a1, Time: date(2018, 1, 1), Text: "Foo 2", Amount: 42}, // Travel
+		{Account: a1, Time: date(2018, 2, 2), Text: "Bar 1", Amount: 42}, // Groceries
+		{Account: a1, Time: date(2018, 1, 1), Text: "Baz 1", Amount: 42}, // Groceries
+		{Account: a1, Time: date(2018, 1, 1), Text: "Bar 2", Amount: 42}, // Misc (pinned)
+		{Account: a1, Time: date(2018, 1, 1), Text: "Boo 1", Amount: 42}, // Unmatched (wrong account)
+		{Account: a2, Time: date(2018, 1, 1), Text: "Boo 2", Amount: 42}, // Other
 	}
-	_, err := j.Write(account.Number, rs)
-	if err != nil {
+	if _, err := j.Write(a1.Number, rs[:6]); err != nil {
 		t.Fatal(err)
 	}
-	records, err := j.Read(account.Number, time.Time{}, time.Time{})
+	if _, err := j.Write(a2.Number, rs[6:]); err != nil {
+		t.Fatal(err)
+	}
+	records, err := j.Read("", time.Time{}, time.Time{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	rg := j.Group(records)
 	var tests = []RecordGroup{
+		{"*** UNMATCHED ***", rs[5:6]},
 		{"Groceries", rs[2:4]},
-		{"Misc", rs[len(rs)-1:]},
+		{"Misc", rs[4:5]},
+		{"Other", rs[6:]},
 		{"Travel", rs[:2]},
 	}
 	for i, tt := range tests {

@@ -26,6 +26,7 @@ type RecordGroup struct {
 
 type Group struct {
 	Name     string
+	Account  string
 	Patterns []string
 	patterns []*regexp.Regexp
 	IDs      []string
@@ -171,6 +172,9 @@ func (j *Journal) Group(rs []record.Record) []RecordGroup {
 
 func (j *Journal) findGroup(r record.Record) *Group {
 	for i, g := range j.groups {
+		if g.Account != "" && g.Account != r.Account.Number {
+			continue
+		}
 		for _, id := range g.IDs {
 			if r.ID() == id {
 				return &j.groups[i]
@@ -178,6 +182,9 @@ func (j *Journal) findGroup(r record.Record) *Group {
 		}
 	}
 	for i, g := range j.groups {
+		if g.Account != "" && g.Account != r.Account.Number {
+			continue
+		}
 		for _, p := range g.patterns {
 			if p.MatchString(r.Text) {
 				return &j.groups[i]
