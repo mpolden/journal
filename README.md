@@ -118,11 +118,9 @@ Now that we have imported records, they can be listed with `journal ls`:
 
 ```
 $ journal ls
-+-----------------------+--------+------------+------------+
-|         GROUP         |  SUM   |    FROM    |     TO     |
-+-----------------------+--------+------------+------------+
-| Public Transportation | -42,00 | 2018-07-01 | 2018-07-16 |
-+-----------------------+--------+------------+------------+
+          GROUP         |  SUM   | RECORDS |    FROM    |     TO
++-----------------------+--------+---------+------------+------------+
+  Public Transportation | -42,00 |       1 | 2018-07-01 | 2018-07-17
 ```
 
 By default, only records within the current month are listed and sorted
@@ -133,11 +131,9 @@ understand a record grouping, we can list individual records and their group:
 
 ```
 $ journal ls --explain
-+---------------+--------------+------------+------+--------+-----------------------+
-|    ACCOUNT    | ACCOUNT NAME |    DATE    | TEXT | AMOUNT |         GROUP         |
-+---------------+--------------+------------+------+--------+-----------------------+
-| 1234.56.78900 | Example Bank | 2018-07-15 | Atb  | -42,00 | Public Transportation |
-+---------------+--------------+------------+------+--------+-----------------------+
+          GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    | TEXT | AMOUNT
++-----------------------+---------------+--------------+------------+------------+------+--------+
+  Public Transportation | 1234.56.78900 | Example Bank | c18225b0c9 | 2018-07-15 | Atb  | -42,00
 ```
 
 If we want show older records, date ranges can be specified using `--since` and
@@ -145,24 +141,20 @@ If we want show older records, date ranges can be specified using `--since` and
 
 ```
 $ journal ls --since 2018-01-01
-+-----------------------+----------+------------+------------+
-|         GROUP         |   SUM    |    FROM    |     TO     |
-+-----------------------+----------+------------+------------+
-| Groceries             | -1379,00 | 2018-01-01 | 2018-07-16 |
-| Public Transportation | -42,00   | 2018-01-01 | 2018-07-16 |
-+-----------------------+----------+------------+------------+
+          GROUP         |   SUM    | RECORDS |    FROM    |     TO
++-----------------------+----------+---------+------------+------------+
+  Groceries             | -1379,00 |       2 | 2018-01-01 | 2018-07-17
+  Public Transportation | -42,00   |       1 | 2018-01-01 | 2018-07-17
 ```
 
 Options also be combined:
 ```
 $ journal ls --since 2018-01-01 --explain
+          GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    |  AMOUNT
 +-----------------------+---------------+--------------+------------+------------+-----------+----------+
-|         GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    |  AMOUNT  |
-+-----------------------+---------------+--------------+------------+------------+-----------+----------+
-| Groceries             | 1234.56.78900 | Example Bank | 51116a3a38 | 2018-05-01 | Rema 1000 | -1337,00 |
-| Groceries             | 1234.56.78900 | Example Bank | eaacbfe8ed | 2018-06-10 | Rema 1000 | -42,00   |
-| Public Transportation | 1234.56.78900 | Example Bank | c18225b0c9 | 2018-07-15 | Atb       | -42,00   |
-+-----------------------+---------------+--------------+------------+------------+-----------+----------+
+  Groceries             | 1234.56.78900 | Example Bank | 51116a3a38 | 2018-05-01 | Rema 1000 | -1337,00
+  Groceries             | 1234.56.78900 | Example Bank | eaacbfe8ed | 2018-06-10 | Rema 1000 | -42,00
+  Public Transportation | 1234.56.78900 | Example Bank | c18225b0c9 | 2018-07-15 | Atb       | -42,00
 ```
 
 See `journal ls -h` for complete usage.

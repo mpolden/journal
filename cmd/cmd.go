@@ -157,6 +157,7 @@ func (l *List) sort(rgs []journal.RecordGroup) error {
 func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time) {
 	table := tablewriter.NewWriter(w)
 	table.SetHeader([]string{"Group", "Sum", "Records", "From", "To"})
+	table.SetBorder(false)
 	for _, rg := range rgs {
 		var sum int64
 		for _, r := range rg.Records {
@@ -177,6 +178,7 @@ func writeGroups(w io.Writer, rgs []journal.RecordGroup, since, until time.Time)
 func writeAll(w io.Writer, rgs []journal.RecordGroup) {
 	table := tablewriter.NewWriter(w)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
+	table.SetBorder(false)
 	for _, rg := range rgs {
 		for _, r := range rg.Records {
 			row := []string{
