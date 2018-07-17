@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mpolden/journal/journal"
+	"github.com/mpolden/journal/record"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -127,7 +128,7 @@ func (l *List) Execute(args []string) error {
 	return nil
 }
 
-func (l *List) sort(rgs []journal.RecordGroup) error {
+func (l *List) sort(rgs []record.Group) error {
 	switch l.OrderBy {
 	case "name":
 		break // default
@@ -153,7 +154,7 @@ func (l *List) sort(rgs []journal.RecordGroup) error {
 	return nil
 }
 
-func (l *List) printGroups(rgs []journal.RecordGroup, since, until time.Time) {
+func (l *List) printGroups(rgs []record.Group, since, until time.Time) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Sum", "Records", "From", "To"})
 	table.SetBorder(false)
@@ -174,7 +175,7 @@ func (l *List) printGroups(rgs []journal.RecordGroup, since, until time.Time) {
 	table.Render()
 }
 
-func (l *List) printAll(rgs []journal.RecordGroup) {
+func (l *List) printAll(rgs []record.Group) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
 	table.SetBorder(false)

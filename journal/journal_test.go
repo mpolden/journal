@@ -92,12 +92,12 @@ func TestGroup(t *testing.T) {
 		t.Fatal(err)
 	}
 	rg := j.Group(records)
-	var tests = []RecordGroup{
-		{"*** UNMATCHED ***", rs[5:6]},
-		{"Groceries", rs[2:4]},
-		{"Misc", rs[4:5]},
-		{"Other", rs[6:]},
-		{"Travel", rs[:2]},
+	var tests = []record.Group{
+		{Name: "*** UNMATCHED ***", Records: rs[5:6]},
+		{Name: "Groceries", Records: rs[2:4]},
+		{Name: "Misc", Records: rs[4:5]},
+		{Name: "Other", Records: rs[6:]},
+		{Name: "Travel", Records: rs[:2]},
 	}
 	for i, tt := range tests {
 		if rg[i].Name != tt.Name {

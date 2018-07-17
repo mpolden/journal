@@ -39,6 +39,12 @@ type Record struct {
 	Amount  int64
 }
 
+// Group contains a group of records
+type Group struct {
+	Name    string
+	Records []Record
+}
+
 type defaultReader struct {
 	rd       io.Reader
 	replacer *strings.Replacer
@@ -60,6 +66,15 @@ func (r *Record) ID() string {
 	buf.WriteString(strconv.FormatInt(r.Amount, 10))
 	sum := sha1.Sum(buf.Bytes())
 	return fmt.Sprintf("%x", sum)[:10]
+}
+
+// Sum returns the total sum of all records in the group
+func (g *Group) Sum() int64 {
+	var sum int64
+	for _, r := range g.Records {
+		sum += r.Amount
+	}
+	return sum
 }
 
 func (d *defaultReader) parseAmount(s string) (int64, error) {

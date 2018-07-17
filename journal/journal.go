@@ -23,11 +23,6 @@ type Account struct {
 	Name   string
 }
 
-type RecordGroup struct {
-	Name    string
-	Records []record.Record
-}
-
 type Group struct {
 	Name     string
 	Account  string
@@ -148,7 +143,7 @@ func (j *Journal) ReadFrom(readerName string, r io.Reader) ([]record.Record, err
 	return rr.Read()
 }
 
-func (j *Journal) Export(w io.Writer, groupedRecords map[string][]RecordGroup) error {
+func (j *Journal) Export(w io.Writer, groupedRecords map[string][]record.Group) error {
 	csv := csv.NewWriter(w)
 	for k, rgs := range groupedRecords {
 		for _, rg := range rgs {
@@ -195,27 +190,27 @@ func (j *Journal) Read(accountNumber string, since, until time.Time) ([]record.R
 	return records, nil
 }
 
-func (j *Journal) Group(rs []record.Record) []RecordGroup {
+func (j *Journal) Group(rs []record.Record) []record.Group {
 	groups := make(map[string][]record.Record)
 	for _, r := range rs {
 		g := j.findGroup(r)
 		groups[g.Name] = append(groups[g.Name], r)
 	}
-	var rgs []RecordGroup
+	var rgs []record.Group
 	for name, rs := range groups {
-		rgs = append(rgs, RecordGroup{Name: name, Records: rs})
+		rgs = append(rgs, record.Group{Name: name, Records: rs})
 	}
 	sort.Slice(rgs, func(i, j int) bool { return rgs[i].Name < rgs[j].Name })
 	return rgs
 }
 
-func (j *Journal) GroupFunc(rs []record.Record, keyFn func(time.Time) string) map[string][]RecordGroup {
+func (j *Journal) GroupFunc(rs []record.Record, keyFn func(time.Time) string) map[string][]record.Group {
 	m := make(map[string][]record.Record)
 	for _, r := range rs {
 		key := keyFn(r.Time)
 		m[key] = append(m[key], r)
 	}
-	rgs := make(map[string][]RecordGroup)
+	rgs := make(map[string][]record.Group)
 	for k, rs := range m {
 		rgs[k] = j.Group(rs)
 	}
@@ -244,12 +239,4 @@ func (j *Journal) findGroup(r record.Record) *Group {
 		}
 	}
 	return &Group{Name: "*** UNMATCHED ***"}
-}
-
-func (rg *RecordGroup) Sum() int64 {
-	var sum int64
-	for _, r := range rg.Records {
-		sum += r.Amount
-	}
-	return sum
 }
