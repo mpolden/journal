@@ -27,6 +27,10 @@ patterns = ["^Foo"]
 [[groups]]
 name = "Groceries"
 patterns = ["^Bar", "^Baz"]
+
+[[groups]]
+name = "Misc"
+ids = ["45defdf469"]
 `
 	conf, err := readConfig(strings.NewReader(tomlConf))
 	if err != nil {
@@ -63,6 +67,7 @@ func TestGroup(t *testing.T) {
 		{Account: account, Time: date(2018, 1, 1), Text: "Foo 2", Amount: 42},
 		{Account: account, Time: date(2018, 2, 2), Text: "Bar 1", Amount: 42},
 		{Account: account, Time: date(2018, 1, 1), Text: "Baz 1", Amount: 42},
+		{Account: account, Time: date(2018, 1, 1), Text: "Bar 2", Amount: 42}, // Pinned record
 	}
 	_, err := j.Write(account.Number, rs)
 	if err != nil {
@@ -73,17 +78,17 @@ func TestGroup(t *testing.T) {
 		t.Fatal(err)
 	}
 	rg := j.Group(records)
-
 	var tests = []RecordGroup{
-		{"Groceries", rs[2:]},
+		{"Groceries", rs[2:4]},
+		{"Misc", rs[len(rs)-1:]},
 		{"Travel", rs[:2]},
 	}
 	for i, tt := range tests {
 		if rg[i].Name != tt.Name {
-			t.Errorf("want Name = %q, got %q", tt.Name, rg[i].Name)
+			t.Errorf("#%d: want Name = %q, got %q", i, tt.Name, rg[i].Name)
 		}
 		if !reflect.DeepEqual(rg[i].Records, tt.Records) {
-			t.Errorf("want Records = %+v, got %+v", tt.Records, rg[i].Records)
+			t.Errorf("#%d: want Records = %+v, got %+v", i, tt.Records, rg[i].Records)
 		}
 	}
 }

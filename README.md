@@ -41,6 +41,13 @@ patterns = ["(?i)^Atb"]
 [[groups]]
 name = "Groceries"
 patterns = ["(?i)^Rema"]
+
+[[groups]]
+name = "One-off purchases"
+ids = [
+  "deadbeef",
+  "cafebabe",
+]
 ```
 
 `Database` specifies where the SQLite database containing our records should be
@@ -57,6 +64,10 @@ must match the corresponding record text.
 If any of the patterns in `patterns` match, the group is considered a match.
 Matching follows the order declared in the configuration file, where the first
 matching group wins.
+
+To avoid having to create patterns for records that may only occur once, it's
+possible to pin records to a group using the record ID. Pinning takes precedence
+over pattern matching. The record ID can be viewed with `journal ls --explain`.
 
 ### Export file
 
@@ -142,16 +153,16 @@ $ journal ls --since 2018-01-01
 +-----------------------+----------+------------+------------+
 ```
 
-Options can of course be combined:
+Options also be combined:
 ```
 $ journal ls --since 2018-01-01 --explain
-+-----------------------+---------------+--------------+------------+-----------+----------+
-|         GROUP         |    ACCOUNT    | ACCOUNT NAME |    DATE    |   TEXT    |  AMOUNT  |
-+-----------------------+---------------+--------------+------------+-----------+----------+
-| Groceries             | 1234.56.78900 | Example Bank | 2018-05-01 | Rema 1000 | -1337,00 |
-|                       |               |              | 2018-06-10 |           | -42,00   |
-| Public Transportation |               |              | 2018-07-15 | Atb       |          |
-+-----------------------+---------------+--------------+------------+-----------+----------+
++-----------------------+---------------+--------------+------------+------------+-----------+----------+
+|         GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    |  AMOUNT  |
++-----------------------+---------------+--------------+------------+------------+-----------+----------+
+| Groceries             | 1234.56.78900 | Example Bank | 51116a3a38 | 2018-05-01 | Rema 1000 | -1337,00 |
+|                       |               |              | eaacbfe8ed | 2018-06-10 |           | -42,00   |
+| Public Transportation |               |              | c18225b0c9 | 2018-07-15 | Atb       |          |
++-----------------------+---------------+--------------+------------+------------+-----------+----------+
 ```
 
 Cells containing equal values are merged for increased readability. 
