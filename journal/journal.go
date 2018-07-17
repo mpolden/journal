@@ -12,8 +12,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/mpolden/journal/record"
-	"github.com/mpolden/journal/record/komplett"
-	"github.com/mpolden/journal/record/norwegian"
 	"github.com/mpolden/journal/sql"
 )
 
@@ -122,32 +120,7 @@ func FormatAmount(n int64) string {
 	return s[:off] + "," + s[off:]
 }
 
-func (j *Journal) writeAccounts() (int64, error) {
-	as := make([]sql.Account, len(j.accounts))
-	for i, a := range j.accounts {
-		as[i] = sql.Account{Number: a.Number, Name: a.Name}
-	}
-	return j.db.AddAccounts(as)
-}
-
-func (j *Journal) ReadFrom(readerName string, r io.Reader) ([]record.Record, error) {
-	var rr record.Reader
-	switch readerName {
-	case "csv":
-		rr = record.NewReader(r)
-	case "komplett", "komplettsparing":
-		kr := komplett.NewReader(r)
-		kr.JSON = readerName == "komplettsparing"
-		rr = kr
-	case "norwegian":
-		rr = norwegian.NewReader(r)
-	default:
-		return nil, fmt.Errorf("invalid reader: %q", readerName)
-	}
-	return rr.Read()
-}
-
-func (j *Journal) Export(w io.Writer, groupedRecords map[string][]record.Group) error {
+func Export(w io.Writer, groupedRecords map[string][]record.Group) error {
 	csv := csv.NewWriter(w)
 	for k, rgs := range groupedRecords {
 		for _, rg := range rgs {
@@ -159,6 +132,14 @@ func (j *Journal) Export(w io.Writer, groupedRecords map[string][]record.Group) 
 	}
 	csv.Flush()
 	return csv.Error()
+}
+
+func (j *Journal) writeAccounts() (int64, error) {
+	as := make([]sql.Account, len(j.accounts))
+	for i, a := range j.accounts {
+		as[i] = sql.Account{Number: a.Number, Name: a.Name}
+	}
+	return j.db.AddAccounts(as)
 }
 
 func (j *Journal) Write(accountNumber string, records []record.Record) (Writes, error) {

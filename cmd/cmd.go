@@ -11,6 +11,8 @@ import (
 
 	"github.com/mpolden/journal/journal"
 	"github.com/mpolden/journal/record"
+	"github.com/mpolden/journal/record/komplett"
+	"github.com/mpolden/journal/record/norwegian"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -61,7 +63,12 @@ func (i *Import) Execute(args []string) error {
 		return err
 	}
 
-	rs, err := j.ReadFrom(i.Reader, f)
+	r, err := i.readerFrom(f)
+	if err != nil {
+		return err
+	}
+
+	rs, err := r.Read()
 	if err != nil {
 		return err
 	}
@@ -70,6 +77,23 @@ func (i *Import) Execute(args []string) error {
 	i.Log.Printf("created %d new account(s)", writes.Account)
 	i.Log.Printf("imported %d new record(s)", writes.Record)
 	return err
+}
+
+func (i *Import) readerFrom(r io.Reader) (record.Reader, error) {
+	var rr record.Reader
+	switch i.Reader {
+	case "csv":
+		rr = record.NewReader(r)
+	case "komplett", "komplettsparing":
+		kr := komplett.NewReader(r)
+		kr.JSON = i.Reader == "komplettsparing"
+		rr = kr
+	case "norwegian":
+		rr = norwegian.NewReader(r)
+	default:
+		return nil, fmt.Errorf("invalid reader: %q", i.Reader)
+	}
+	return rr, nil
 }
 
 func parseTime(s string) (time.Time, error) {
@@ -212,6 +236,8 @@ func (e *Export) Execute(args []string) error {
 		return err
 	}
 
-	byMonth := j.GroupFunc(rs, func(r record.Record) string { return r.Time.Format("2006-01") })
-	return j.Export(e.Writer, byMonth)
+	byMonth := j.GroupFunc(rs, func(r record.Record) string {
+		return r.Time.Format("2006-01")
+	})
+	return journal.Export(e.Writer, byMonth)
 }
