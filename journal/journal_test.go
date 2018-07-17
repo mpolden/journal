@@ -68,7 +68,7 @@ func TestWrite(t *testing.T) {
 	}
 }
 
-func TestGroup(t *testing.T) {
+func TestAssort(t *testing.T) {
 	j := testJournal(t)
 	a1 := record.Account{Number: "1234.56.78900", Name: "My account 1"}
 	a2 := record.Account{Number: "1234.56.78901", Name: "My account 2"}
@@ -91,7 +91,7 @@ func TestGroup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rg := j.Group(records)
+	rg := j.Assort(records)
 	var tests = []record.Group{
 		{Name: "*** UNMATCHED ***", Records: rs[5:6]},
 		{Name: "Groceries", Records: rs[2:4]},

@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"time"
 
@@ -17,6 +16,8 @@ import (
 	"github.com/mpolden/journal/record/norwegian"
 	"github.com/mpolden/journal/sql"
 )
+
+const unmatchedRecord = "*** UNMATCHED ***"
 
 type Account struct {
 	Number string
@@ -190,53 +191,34 @@ func (j *Journal) Read(accountNumber string, since, until time.Time) ([]record.R
 	return records, nil
 }
 
-func (j *Journal) Group(rs []record.Record) []record.Group {
-	groups := make(map[string][]record.Record)
-	for _, r := range rs {
-		g := j.findGroup(r)
-		groups[g.Name] = append(groups[g.Name], r)
-	}
-	var rgs []record.Group
-	for name, rs := range groups {
-		rgs = append(rgs, record.Group{Name: name, Records: rs})
-	}
-	sort.Slice(rgs, func(i, j int) bool { return rgs[i].Name < rgs[j].Name })
-	return rgs
+func (j *Journal) Assort(records []record.Record) []record.Group {
+	return record.AssortFunc(records, j.findGroup)
 }
 
-func (j *Journal) GroupFunc(rs []record.Record, keyFn func(time.Time) string) map[string][]record.Group {
-	m := make(map[string][]record.Record)
-	for _, r := range rs {
-		key := keyFn(r.Time)
-		m[key] = append(m[key], r)
-	}
-	rgs := make(map[string][]record.Group)
-	for k, rs := range m {
-		rgs[k] = j.Group(rs)
-	}
-	return rgs
+func (j *Journal) GroupFunc(records []record.Record, keyFn func(record.Record) string) map[string][]record.Group {
+	return record.GroupFunc(records, keyFn, j.findGroup)
 }
 
-func (j *Journal) findGroup(r record.Record) *Group {
-	for i, g := range j.groups {
+func (j *Journal) findGroup(r record.Record) string {
+	for _, g := range j.groups {
 		if g.Account != "" && g.Account != r.Account.Number {
 			continue
 		}
 		for _, id := range g.IDs {
 			if r.ID() == id {
-				return &j.groups[i]
+				return g.Name
 			}
 		}
 	}
-	for i, g := range j.groups {
+	for _, g := range j.groups {
 		if g.Account != "" && g.Account != r.Account.Number {
 			continue
 		}
 		for _, p := range g.patterns {
 			if p.MatchString(r.Text) {
-				return &j.groups[i]
+				return g.Name
 			}
 		}
 	}
-	return &Group{Name: "*** UNMATCHED ***"}
+	return unmatchedRecord
 }

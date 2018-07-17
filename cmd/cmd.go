@@ -114,7 +114,7 @@ func (l *List) Execute(args []string) error {
 		return err
 	}
 
-	rgs := j.Group(rs)
+	rgs := j.Assort(rs)
 
 	if err := l.sort(rgs); err != nil {
 		return err
@@ -212,6 +212,6 @@ func (e *Export) Execute(args []string) error {
 		return err
 	}
 
-	byMonth := j.GroupFunc(rs, func(t time.Time) string { return t.Format("2006-01") })
+	byMonth := j.GroupFunc(rs, func(r record.Record) string { return r.Time.Format("2006-01") })
 	return j.Export(e.Writer, byMonth)
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -75,6 +76,35 @@ func (g *Group) Sum() int64 {
 		sum += r.Amount
 	}
 	return sum
+}
+
+// AssortFunc uses groupFn to assort records into groups
+func AssortFunc(records []Record, assortFn func(Record) string) []Group {
+	groups := make(map[string][]Record)
+	for _, r := range records {
+		key := assortFn(r)
+		groups[key] = append(groups[key], r)
+	}
+	var rgs []Group
+	for name, rs := range groups {
+		rgs = append(rgs, Group{Name: name, Records: rs})
+	}
+	sort.Slice(rgs, func(i, j int) bool { return rgs[i].Name < rgs[j].Name })
+	return rgs
+}
+
+// GroupFunc uses keyFn and assortFn to group record groups
+func GroupFunc(records []Record, keyFn, assortFn func(Record) string) map[string][]Group {
+	m := make(map[string][]Record)
+	for _, r := range records {
+		key := keyFn(r)
+		m[key] = append(m[key], r)
+	}
+	rgs := make(map[string][]Group)
+	for k, rs := range m {
+		rgs[k] = AssortFunc(rs, assortFn)
+	}
+	return rgs
 }
 
 func (d *defaultReader) parseAmount(s string) (int64, error) {
