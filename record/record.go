@@ -79,10 +79,13 @@ func (g *Group) Sum() int64 {
 }
 
 // AssortFunc uses groupFn to assort records into groups
-func AssortFunc(records []Record, assortFn func(Record) string) []Group {
+func AssortFunc(records []Record, assortFn func(Record) (bool, string)) []Group {
 	groups := make(map[string][]Record)
 	for _, r := range records {
-		key := assortFn(r)
+		ok, key := assortFn(r)
+		if !ok {
+			continue
+		}
 		groups[key] = append(groups[key], r)
 	}
 	var rgs []Group
@@ -94,7 +97,7 @@ func AssortFunc(records []Record, assortFn func(Record) string) []Group {
 }
 
 // GroupFunc uses keyFn and assortFn to group record groups
-func GroupFunc(records []Record, keyFn, assortFn func(Record) string) map[string][]Group {
+func GroupFunc(records []Record, keyFn func(Record) string, assortFn func(Record) (bool, string)) map[string][]Group {
 	m := make(map[string][]Record)
 	for _, r := range records {
 		key := keyFn(r)

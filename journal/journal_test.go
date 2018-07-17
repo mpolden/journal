@@ -40,6 +40,11 @@ ids = ["45defdf469"]
 name = "Other"
 account = "1234.56.78901"
 patterns = ["^Boo"]
+
+[[groups]]
+name = "Unimportant"
+patterns = ["^Spam"]
+discard = true
 `
 	conf, err := readConfig(strings.NewReader(tomlConf))
 	if err != nil {
@@ -80,6 +85,7 @@ func TestAssort(t *testing.T) {
 		{Account: a1, Time: date(2018, 1, 1), Text: "Bar 2", Amount: 42}, // Misc (pinned)
 		{Account: a1, Time: date(2018, 1, 1), Text: "Boo 1", Amount: 42}, // Unmatched (wrong account)
 		{Account: a2, Time: date(2018, 1, 1), Text: "Boo 2", Amount: 42}, // Other
+		{Account: a1, Time: date(2018, 1, 1), Text: "Spam", Amount: 42},  // No group (discarded)
 	}
 	if _, err := j.Write(a1.Number, rs[:6]); err != nil {
 		t.Fatal(err)
@@ -91,20 +97,23 @@ func TestAssort(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rg := j.Assort(records)
+	rgs := j.Assort(records)
 	var tests = []record.Group{
 		{Name: "*** UNMATCHED ***", Records: rs[5:6]},
 		{Name: "Groceries", Records: rs[2:4]},
 		{Name: "Misc", Records: rs[4:5]},
-		{Name: "Other", Records: rs[6:]},
+		{Name: "Other", Records: rs[6:7]},
 		{Name: "Travel", Records: rs[:2]},
 	}
+	if want, got := len(tests), len(rgs); want != got {
+		t.Errorf("want %d groups, got %d", want, got)
+	}
 	for i, tt := range tests {
-		if rg[i].Name != tt.Name {
-			t.Errorf("#%d: want Name = %q, got %q", i, tt.Name, rg[i].Name)
+		if rgs[i].Name != tt.Name {
+			t.Errorf("#%d: want Name = %q, got %q", i, tt.Name, rgs[i].Name)
 		}
-		if !reflect.DeepEqual(rg[i].Records, tt.Records) {
-			t.Errorf("#%d: want Records = %+v, got %+v", i, tt.Records, rg[i].Records)
+		if !reflect.DeepEqual(rgs[i].Records, tt.Records) {
+			t.Errorf("#%d: want Records = %+v, got %+v", i, tt.Records, rgs[i].Records)
 		}
 	}
 }

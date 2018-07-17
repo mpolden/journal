@@ -30,6 +30,7 @@ type Group struct {
 	Patterns []string
 	patterns []*regexp.Regexp
 	IDs      []string
+	Discard  bool
 }
 
 type Config struct {
@@ -201,14 +202,14 @@ func (j *Journal) GroupFunc(records []record.Record, keyFn func(record.Record) s
 	return record.GroupFunc(records, keyFn, j.findGroup)
 }
 
-func (j *Journal) findGroup(r record.Record) string {
+func (j *Journal) findGroup(r record.Record) (bool, string) {
 	for _, g := range j.groups {
 		if g.Account != "" && g.Account != r.Account.Number {
 			continue
 		}
 		for _, id := range g.IDs {
 			if r.ID() == id {
-				return g.Name
+				return !g.Discard, g.Name
 			}
 		}
 	}
@@ -218,9 +219,9 @@ func (j *Journal) findGroup(r record.Record) string {
 		}
 		for _, p := range g.patterns {
 			if p.MatchString(r.Text) {
-				return g.Name
+				return !g.Discard, g.Name
 			}
 		}
 	}
-	return unmatchedRecord
+	return true, unmatchedRecord
 }
