@@ -1,6 +1,7 @@
 package journal
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -33,6 +34,7 @@ type Group struct {
 
 type Config struct {
 	Database string
+	Comma    string
 	Accounts []Account
 	Groups   []Group
 }
@@ -41,6 +43,7 @@ type Journal struct {
 	accounts []Account
 	groups   []Group
 	db       *sql.Client
+	Comma    string
 }
 
 type Writes struct {
@@ -107,24 +110,39 @@ func New(conf Config) (*Journal, error) {
 	if err != nil {
 		return nil, err
 	}
+	comma := conf.Comma
+	if comma == "" {
+		comma = "."
+	}
 	return &Journal{
 		db:       db,
 		accounts: conf.Accounts,
 		groups:   conf.Groups,
+		Comma:    comma,
 	}, nil
 }
 
-func FormatAmount(n int64) string {
-	s := strconv.FormatInt(n, 10)
-	off := len(s) - 2
-	return s[:off] + "," + s[off:]
+func (j *Journal) FormatAmount(n int64) string {
+	i := n / 100
+	f := n % 100
+	var buf bytes.Buffer
+	if f < 0 {
+		f *= -1
+		if i == 0 {
+			buf.WriteRune('-')
+		}
+	}
+	buf.WriteString(strconv.FormatInt(i, 10))
+	buf.WriteString(j.Comma)
+	buf.WriteString(fmt.Sprintf("%02d", f))
+	return buf.String()
 }
 
-func Export(w io.Writer, periods []record.Period, timeLayout string) error {
+func (j *Journal) Export(w io.Writer, periods []record.Period, timeLayout string) error {
 	csv := csv.NewWriter(w)
 	for _, p := range periods {
 		for _, rg := range p.Groups {
-			r := []string{p.Time.Format(timeLayout), rg.Name, FormatAmount(rg.Sum())}
+			r := []string{p.Time.Format(timeLayout), rg.Name, j.FormatAmount(rg.Sum())}
 			if err := csv.Write(r); err != nil {
 				return err
 			}

@@ -73,6 +73,33 @@ func TestWrite(t *testing.T) {
 	}
 }
 
+func TestFormatAmount(t *testing.T) {
+	j := testJournal(t)
+	var tests = []struct {
+		amount int64
+		comma  string
+		out    string
+	}{
+		{-1053, ",", "-10,53"},
+		{-153, ",", "-1,53"},
+		{-15, ",", "-0,15"},
+		{-1, ",", "-0,01"},
+		{0, ",", "0,00"},
+		{1, ",", "0,01"},
+		{15, ",", "0,15"},
+		{153, ",", "1,53"},
+		{1053, ",", "10,53"},
+		{1053, ".", "10.53"},
+	}
+	for i, tt := range tests {
+		j.Comma = tt.comma
+		got := j.FormatAmount(tt.amount)
+		if got != tt.out {
+			t.Errorf("#%d: want %q, got %q", i, tt.out, got)
+		}
+	}
+}
+
 func TestAssort(t *testing.T) {
 	j := testJournal(t)
 	a1 := record.Account{Number: "1234.56.78900", Name: "My account 1"}

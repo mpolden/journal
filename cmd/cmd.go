@@ -145,9 +145,9 @@ func (l *List) Execute(args []string) error {
 	}
 
 	if l.Explain {
-		l.printAll(rgs)
+		l.printAll(rgs, j.FormatAmount)
 	} else {
-		l.printGroups(rgs, s, u)
+		l.printGroups(rgs, j.FormatAmount, s, u)
 	}
 	return nil
 }
@@ -178,7 +178,7 @@ func (l *List) sort(rgs []record.Group) error {
 	return nil
 }
 
-func (l *List) printGroups(rgs []record.Group, since, until time.Time) {
+func (l *List) printGroups(rgs []record.Group, fmtSum func(int64) string, since, until time.Time) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Sum", "Records", "From", "To"})
 	table.SetBorder(false)
@@ -189,7 +189,7 @@ func (l *List) printGroups(rgs []record.Group, since, until time.Time) {
 		}
 		row := []string{
 			rg.Name,
-			journal.FormatAmount(sum),
+			fmtSum(sum),
 			strconv.Itoa(len(rg.Records)),
 			since.Format("2006-01-02"),
 			until.Format("2006-01-02"),
@@ -199,7 +199,7 @@ func (l *List) printGroups(rgs []record.Group, since, until time.Time) {
 	table.Render()
 }
 
-func (l *List) printAll(rgs []record.Group) {
+func (l *List) printAll(rgs []record.Group, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
 	table.SetBorder(false)
@@ -212,7 +212,7 @@ func (l *List) printAll(rgs []record.Group) {
 				r.ID(),
 				r.Time.Format("2006-01-02"),
 				r.Text,
-				journal.FormatAmount(r.Amount),
+				fmtAmount(r.Amount),
 			}
 			table.Append(row)
 		}
@@ -239,5 +239,5 @@ func (e *Export) Execute(args []string) error {
 	periods := j.AssortPeriod(rs, func(t time.Time) time.Time {
 		return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
 	})
-	return journal.Export(e.Writer, periods, "2006-01")
+	return j.Export(e.Writer, periods, "2006-01")
 }
