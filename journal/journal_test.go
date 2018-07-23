@@ -16,6 +16,8 @@ func date(year int, month time.Month, day int) time.Time {
 func testJournal(t *testing.T) *Journal {
 	tomlConf := `
 Database = ":memory:"
+DefaultGroup = "* no group *"
+
 [[accounts]]
 number = "1234.56.78900"
 name = "My account 1"
@@ -126,7 +128,7 @@ func TestAssort(t *testing.T) {
 	}
 	rgs := j.Assort(records)
 	var tests = []record.Group{
-		{Name: "*** UNMATCHED ***", Records: rs[5:6]},
+		{Name: "* no group *", Records: rs[5:6]},
 		{Name: "Groceries", Records: rs[2:4]},
 		{Name: "Misc", Records: rs[4:5]},
 		{Name: "Other", Records: rs[6:7]},

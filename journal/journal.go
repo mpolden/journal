@@ -16,8 +16,6 @@ import (
 	"github.com/mpolden/journal/sql"
 )
 
-const unmatchedRecord = "*** UNMATCHED ***"
-
 type Account struct {
 	Number string
 	Name   string
@@ -34,17 +32,19 @@ type Group struct {
 }
 
 type Config struct {
-	Database string
-	Comma    string
-	Accounts []Account
-	Groups   []Group
+	Database     string
+	Comma        string
+	DefaultGroup string
+	Accounts     []Account
+	Groups       []Group
 }
 
 type Journal struct {
-	accounts []Account
-	groups   []Group
-	db       *sql.Client
-	Comma    string
+	accounts     []Account
+	groups       []Group
+	db           *sql.Client
+	Comma        string
+	DefaultGroup string
 }
 
 type Writes struct {
@@ -115,11 +115,16 @@ func New(conf Config) (*Journal, error) {
 	if comma == "" {
 		comma = "."
 	}
+	defaultGroup := conf.DefaultGroup
+	if defaultGroup == "" {
+		defaultGroup = "*** UNMATCHED ***"
+	}
 	return &Journal{
-		db:       db,
-		accounts: conf.Accounts,
-		groups:   conf.Groups,
-		Comma:    comma,
+		db:           db,
+		accounts:     conf.Accounts,
+		groups:       conf.Groups,
+		Comma:        comma,
+		DefaultGroup: defaultGroup,
 	}, nil
 }
 
@@ -225,5 +230,5 @@ func (j *Journal) findGroup(r record.Record) (record.Group, bool) {
 			}
 		}
 	}
-	return record.Group{Name: unmatchedRecord}, true
+	return record.Group{Name: j.DefaultGroup}, true
 }

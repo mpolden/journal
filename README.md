@@ -42,6 +42,7 @@ Example:
 ```toml
 Database = "/home/user/journal.db"
 Comma = "."
+DefaultGroup = "*** UNMATCHED ***"
 
 [[accounts]]
 number = "1234.56.78900"
@@ -75,6 +76,9 @@ stored.
 
 `Comma` is the decimal separator to use when displaying monetary amounts. It
 defaults to `.`.
+
+`DefaultGroup` is the default group name to use for records that are not matched
+by any groups. Defaults to `*** UNMATCHED ***`.
 
 `[[accounts]]` declares known bank accounts. The section can be repeated to
 define multiple accounts. Importing records for an unknown account is an error.
