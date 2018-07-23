@@ -71,7 +71,8 @@ discard = true
 `Database` specifies where the SQLite database containing our records should be
 stored.
 
-`Comma` is the decimal separator to use when record amounts. It defaults to `.`.
+`Comma` is the decimal separator to use when displaying monetary amounts. It
+defaults to `.`.
 
 `[[accounts]]` declares known bank accounts. The section can be repeated to
 define multiple accounts. Importing records for an unknown account is an error.
