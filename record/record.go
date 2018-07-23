@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mpolden/journal/timeutil"
 	"github.com/pkg/errors"
 )
 
@@ -42,8 +43,9 @@ type Record struct {
 
 // A Group is a list of recordes grouped together under a common name.
 type Group struct {
-	Name    string
-	Records []Record
+	Name          string
+	Records       []Record
+	MonthlyBudget int64
 }
 
 // A Period stores record groups for specific moment in time.
@@ -52,13 +54,20 @@ type Period struct {
 	Groups []Group
 }
 
-type defaultReader struct {
+type reader struct {
 	rd       io.Reader
 	replacer *strings.Replacer
 }
 
+func max(x, y int64) int64 {
+	if x > y {
+		return x
+	}
+	return y
+}
+
 func NewReader(rd io.Reader) Reader {
-	return &defaultReader{
+	return &reader{
 		rd:       rd,
 		replacer: strings.NewReplacer(decimalSeparator, "", thousandSeparator, ""),
 	}
@@ -84,26 +93,51 @@ func (g *Group) Sum() int64 {
 	return sum
 }
 
+// Budget returns the budget for this group. The budget is adjusted to the record period
+func (g *Group) Budget() int64 {
+	var since, until time.Time
+	for _, r := range g.Records {
+		if since.IsZero() || r.Time.Before(since) {
+			since = r.Time
+		}
+		if r.Time.After(until) {
+			until = r.Time
+		}
+	}
+	return g.MonthlyBudget * max(1, timeutil.MonthsBetween(since, until))
+}
+
+// Balance returns the difference between the budget of this group and its sum. The balance is adjusted to the record
+// period.
+func (g *Group) Balance() int64 {
+	return g.Budget() - g.Sum()
+}
+
 // AssortFunc uses groupFn to assort records into groups.
-func AssortFunc(records []Record, assortFn func(Record) (bool, string)) []Group {
-	m := make(map[string][]Record)
+func AssortFunc(records []Record, assortFn func(Record) (Group, bool)) []Group {
+	m := make(map[string]Group)
 	for _, r := range records {
-		ok, key := assortFn(r)
+		target, ok := assortFn(r)
 		if !ok {
 			continue
 		}
-		m[key] = append(m[key], r)
+		g, ok := m[target.Name]
+		if !ok {
+			g = target
+		}
+		g.Records = append(g.Records, r)
+		m[target.Name] = g
 	}
 	var gs []Group
-	for name, rs := range m {
-		gs = append(gs, Group{Name: name, Records: rs})
+	for _, g := range m {
+		gs = append(gs, g)
 	}
 	sort.Slice(gs, func(i, j int) bool { return gs[i].Name < gs[j].Name })
 	return gs
 }
 
 // AssortPeriodFunc assorts records into groups grouped by timeFn.
-func AssortPeriodFunc(records []Record, timeFn func(time.Time) time.Time, assortFn func(Record) (bool, string)) []Period {
+func AssortPeriodFunc(records []Record, timeFn func(time.Time) time.Time, assortFn func(Record) (Group, bool)) []Period {
 	m := make(map[time.Time][]Record)
 	for _, r := range records {
 		key := timeFn(r.Time)
@@ -117,7 +151,7 @@ func AssortPeriodFunc(records []Record, timeFn func(time.Time) time.Time, assort
 	return ps
 }
 
-func (d *defaultReader) parseAmount(s string) (int64, error) {
+func (d *reader) parseAmount(s string) (int64, error) {
 	v := d.replacer.Replace(s)
 	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
@@ -126,7 +160,8 @@ func (d *defaultReader) parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
-func (r *defaultReader) Read() ([]Record, error) {
+// Read all records from the reader.
+func (r *reader) Read() ([]Record, error) {
 	buf := bufio.NewReader(r.rd)
 	// Peek at the first rune see if the file starts with a byte order mark
 	rune, _, err := buf.ReadRune()

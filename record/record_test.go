@@ -91,25 +91,26 @@ func TestID(t *testing.T) {
 
 func TestAssortFunc(t *testing.T) {
 	rs := []Record{
-		{Time: date(2017, 1, 1), Text: "Foo", Amount: 42},
+		{Time: date(2017, 1, 1), Text: "Foo 1", Amount: 42},
+		{Time: date(2017, 1, 1), Text: "Foo 2", Amount: 42},
 		{Time: date(2017, 1, 1), Text: "Bar", Amount: 42},
 		{Time: date(2017, 1, 1), Text: "Baz", Amount: 42},
 	}
-	gs := AssortFunc(rs, func(r Record) (bool, string) {
+	gs := AssortFunc(rs, func(r Record) (Group, bool) {
 		switch r.Text {
-		case "Foo":
-			return true, "A"
+		case "Foo 1", "Foo 2":
+			return Group{Name: "A"}, true
 		case "Bar":
-			return true, "B"
+			return Group{Name: "B"}, true
 		default:
-			return false, ""
+			return Group{}, false
 		}
 	})
 	var tests = []struct {
 		g Group
 	}{
-		{Group{Name: "A", Records: rs[0:1]}},
-		{Group{Name: "B", Records: rs[1:2]}},
+		{Group{Name: "A", Records: rs[0:2]}},
+		{Group{Name: "B", Records: rs[2:3]}},
 	}
 	if want, got := len(gs), len(tests); want != got {
 		t.Errorf("want len = %d, got %d", want, got)
@@ -134,8 +135,8 @@ func TestAssortPeriodFunc(t *testing.T) {
 		func(t time.Time) time.Time {
 			return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
 		},
-		func(r Record) (bool, string) {
-			return true, "A"
+		func(r Record) (Group, bool) {
+			return Group{Name: "A"}, true
 		})
 
 	var tests = []struct {
@@ -151,6 +152,40 @@ func TestAssortPeriodFunc(t *testing.T) {
 	for i, tt := range tests {
 		if !reflect.DeepEqual(ps[i], tt.p) {
 			t.Errorf("#%d: want Period = %+v, got %+v", i, tt.p, ps[i])
+		}
+	}
+}
+
+func TestGroupMath(t *testing.T) {
+	var tests = []struct {
+		g       Group
+		sum     int64
+		balance int64
+	}{
+		{Group{
+			Name:          "A",
+			MonthlyBudget: 500,
+			Records: []Record{
+				{Text: "T 1", Amount: 50},
+				{Text: "T 2", Amount: 200},
+				{Text: "T 3", Amount: 1000},
+			},
+		}, 1250, -750},
+		{Group{
+			Name:          "A",
+			MonthlyBudget: -500,
+			Records: []Record{
+				{Text: "T 1", Amount: -500},
+				{Text: "T 3", Amount: -100},
+			},
+		}, -600, 100},
+	}
+	for i, tt := range tests {
+		if want, got := tt.sum, tt.g.Sum(); want != got {
+			t.Errorf("#%d: want Sum = %d, got %d", i, want, got)
+		}
+		if want, got := tt.balance, tt.g.Balance(); want != got {
+			t.Errorf("#%d: want Balance = %d, got %d", i, want, got)
 		}
 	}
 }

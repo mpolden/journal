@@ -77,7 +77,7 @@ func (i *Import) Execute(args []string) error {
 
 	writes, err := j.Write(i.Args.Account, rs)
 	i.Log.Printf("created %d new account(s)", writes.Account)
-	i.Log.Printf("imported %d new record(s)", writes.Record)
+	i.Log.Printf("imported %d new record(s) out of %d total", writes.Record, len(rs))
 	return err
 }
 
@@ -184,7 +184,7 @@ func (l *List) sort(rgs []record.Group) error {
 
 func (l *List) printGroups(rgs []record.Group, fmtSum func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
-	table.SetHeader([]string{"Group", "Sum", "Records"})
+	table.SetHeader([]string{"Group", "Records", "Sum", "Budget", "Balance"})
 	table.SetBorder(false)
 	for _, rg := range rgs {
 		var sum int64
@@ -193,8 +193,10 @@ func (l *List) printGroups(rgs []record.Group, fmtSum func(int64) string) {
 		}
 		row := []string{
 			rg.Name,
-			fmtSum(sum),
 			strconv.Itoa(len(rg.Records)),
+			fmtSum(sum),
+			fmtSum(rg.Budget()),
+			fmtSum(rg.Balance()),
 		}
 		table.Append(row)
 	}

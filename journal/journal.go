@@ -26,6 +26,7 @@ type Account struct {
 type Group struct {
 	Name     string
 	Account  string
+	Budget   int64
 	Patterns []string
 	patterns []*regexp.Regexp
 	IDs      []string
@@ -203,14 +204,14 @@ func (j *Journal) AssortPeriod(records []record.Record, timeFn func(time.Time) t
 	return record.AssortPeriodFunc(records, timeFn, j.findGroup)
 }
 
-func (j *Journal) findGroup(r record.Record) (bool, string) {
+func (j *Journal) findGroup(r record.Record) (record.Group, bool) {
 	for _, g := range j.groups {
 		if g.Account != "" && g.Account != r.Account.Number {
 			continue
 		}
 		for _, id := range g.IDs {
 			if r.ID() == id {
-				return !g.Discard, g.Name
+				return record.Group{Name: g.Name, MonthlyBudget: g.Budget}, !g.Discard
 			}
 		}
 	}
@@ -220,9 +221,9 @@ func (j *Journal) findGroup(r record.Record) (bool, string) {
 		}
 		for _, p := range g.patterns {
 			if p.MatchString(r.Text) {
-				return !g.Discard, g.Name
+				return record.Group{Name: g.Name, MonthlyBudget: g.Budget}, !g.Discard
 			}
 		}
 	}
-	return true, unmatchedRecord
+	return record.Group{Name: unmatchedRecord}, true
 }
