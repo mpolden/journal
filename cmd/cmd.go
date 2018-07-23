@@ -16,6 +16,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+const timeLayout = "2006-01-02"
+
 type Options struct {
 	Config string `short:"f" long:"config" description:"Config file" value-name:"FILE" default:"~/.journalrc"`
 	Writer io.Writer
@@ -100,7 +102,7 @@ func parseTime(s string) (time.Time, error) {
 	if s == "" {
 		return time.Time{}, nil
 	}
-	return time.Parse("2006-01-02", s)
+	return time.Parse(timeLayout, s)
 }
 
 func timeRange(since, until string) (time.Time, time.Time, error) {
@@ -144,10 +146,12 @@ func (l *List) Execute(args []string) error {
 		return err
 	}
 
+	l.Log.Printf("displaying records between %s and %s", s.Format(timeLayout), u.Format(timeLayout))
+
 	if l.Explain {
 		l.printAll(rgs, j.FormatAmount)
 	} else {
-		l.printGroups(rgs, j.FormatAmount, s, u)
+		l.printGroups(rgs, j.FormatAmount)
 	}
 	return nil
 }
@@ -178,9 +182,9 @@ func (l *List) sort(rgs []record.Group) error {
 	return nil
 }
 
-func (l *List) printGroups(rgs []record.Group, fmtSum func(int64) string, since, until time.Time) {
+func (l *List) printGroups(rgs []record.Group, fmtSum func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
-	table.SetHeader([]string{"Group", "Sum", "Records", "From", "To"})
+	table.SetHeader([]string{"Group", "Sum", "Records"})
 	table.SetBorder(false)
 	for _, rg := range rgs {
 		var sum int64
@@ -191,8 +195,6 @@ func (l *List) printGroups(rgs []record.Group, fmtSum func(int64) string, since,
 			rg.Name,
 			fmtSum(sum),
 			strconv.Itoa(len(rg.Records)),
-			since.Format("2006-01-02"),
-			until.Format("2006-01-02"),
 		}
 		table.Append(row)
 	}
