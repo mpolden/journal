@@ -10,7 +10,11 @@ import (
 func main() {
 	p := flags.NewParser(nil, flags.HelpFlag|flags.PassDoubleDash)
 	log := cmd.NewLogger(os.Stderr)
-	opts := cmd.Options{Log: log, Writer: os.Stdout}
+	isPipe, err := isPipe(os.Stdout)
+	if err != nil {
+		log.Fatal(err)
+	}
+	opts := cmd.Options{Log: log, Writer: os.Stdout, IsPipe: isPipe}
 
 	imp := cmd.Import{Options: opts}
 	if _, err := p.AddCommand("import", "Import records", "Imports records into the database.", &imp); err != nil {
@@ -30,4 +34,12 @@ func main() {
 	if _, err := p.Parse(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func isPipe(f *os.File) (bool, error) {
+	stat, err := f.Stat()
+	if err != nil {
+		return false, err
+	}
+	return stat.Mode()&os.ModeCharDevice == 0, nil
 }

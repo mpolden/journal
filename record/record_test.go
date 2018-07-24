@@ -158,9 +158,12 @@ func TestAssortPeriodFunc(t *testing.T) {
 
 func TestGroupMath(t *testing.T) {
 	var tests = []struct {
-		g       Group
-		sum     int64
-		balance int64
+		g        Group
+		sum      int64
+		budget   int64
+		balance  int64
+		fraction int64
+		balanced bool
 	}{
 		{Group{
 			Name:          "A",
@@ -170,22 +173,103 @@ func TestGroupMath(t *testing.T) {
 				{Text: "T 2", Amount: 200},
 				{Text: "T 3", Amount: 1000},
 			},
-		}, 1250, -750},
+		},
+			1250,   // sum
+			500,    // budget
+			-750,   // balance
+			10,     // fraction
+			false}, // balanced
+		{Group{
+			Name:          "A",
+			MonthlyBudget: -500,
+			Records: []Record{
+				{Time: date(2017, 1, 1), Text: "T 1", Amount: -500},
+				{Time: date(2017, 3, 1), Text: "T 3", Amount: -100},
+			},
+		},
+			-600,     // sum
+			-500 * 2, // budget
+			-400,     // balance
+			10,       // fraction
+			false},   // balanced
 		{Group{
 			Name:          "A",
 			MonthlyBudget: -500,
 			Records: []Record{
 				{Text: "T 1", Amount: -500},
-				{Text: "T 3", Amount: -100},
+				{Text: "T 3", Amount: -50},
 			},
-		}, -600, 100},
+		},
+			-550,  // sum
+			-500,  // budget
+			50,    // balance
+			10,    // fraction
+			true}, // balanced
+		{Group{
+			Name:          "A",
+			MonthlyBudget: 500,
+			Records: []Record{
+				{Text: "T 1", Amount: 500},
+				{Text: "T 3", Amount: 50},
+			},
+		},
+			550,   // sum
+			500,   // budget
+			-50,   // balance
+			10,    // fraction
+			true}, // balanced
+		{Group{
+			Name:          "A",
+			MonthlyBudget: 500,
+			Records: []Record{
+				{Text: "T 1", Amount: 500},
+				{Text: "T 3", Amount: 60},
+			},
+		},
+			560,    // sum
+			500,    // budget
+			-60,    // balance
+			10,     // fraction
+			false}, // balanced
+		{Group{
+			Name:          "A",
+			MonthlyBudget: 560,
+			Records: []Record{
+				{Text: "T 1", Amount: 500},
+				{Text: "T 3", Amount: 60},
+			},
+		},
+			560,   // sum
+			560,   // budget
+			0,     // balance
+			0,     // fraction
+			true}, // balanced
+		{Group{
+			Name:          "A",
+			MonthlyBudget: -5000,
+			Records: []Record{
+				{Text: "T 1", Amount: -6000},
+				{Text: "T 3", Amount: -433},
+			},
+		},
+			-6433,  // sum
+			-5000,  // budget
+			1433,   // balance
+			1,      // fraction
+			false}, // balanced
 	}
 	for i, tt := range tests {
 		if want, got := tt.sum, tt.g.Sum(); want != got {
 			t.Errorf("#%d: want Sum = %d, got %d", i, want, got)
 		}
+		if want, got := tt.budget, tt.g.Budget(); want != got {
+			t.Errorf("#%d: want Budget = %d, got %d", i, want, got)
+		}
 		if want, got := tt.balance, tt.g.Balance(); want != got {
 			t.Errorf("#%d: want Balance = %d, got %d", i, want, got)
+		}
+		if want, got := tt.balanced, tt.g.Balanced(tt.fraction); want != got {
+			t.Errorf("#%d: want Balanced = %t, got %t", i, want, got)
 		}
 	}
 }

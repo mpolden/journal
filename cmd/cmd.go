@@ -21,6 +21,8 @@ const timeLayout = "2006-01-02"
 // Options represents command line options that are shared across sub-commands.
 type Options struct {
 	Config string `short:"f" long:"config" description:"Config file" value-name:"FILE" default:"~/.journalrc"`
+	Color  string `short:"c" long:"color" description:"When to use colors in output. Default is to use colors if stdout is a TTY" default:"auto" choice:"always" choice:"never" choice:"auto"`
+	IsPipe bool
 	Writer io.Writer
 	Log    *log.Logger
 }
@@ -55,6 +57,7 @@ type List struct {
 	Args    struct {
 		Account string `description:"Only print records for given account number" positional-arg-name:"account-number"`
 	} `positional-args:"yes"`
+	journal *journal.Journal
 }
 
 // NewLogger creates a new preconfigured logger.
@@ -138,6 +141,7 @@ func (l *List) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
+	l.journal = j
 
 	s, u, err := timeRange(l.Since, l.Until)
 	if err != nil {
@@ -158,9 +162,9 @@ func (l *List) Execute(args []string) error {
 	l.Log.Printf("displaying records between %s and %s", s.Format(timeLayout), u.Format(timeLayout))
 
 	if l.Explain {
-		l.printAll(rgs, j.FormatAmount)
+		l.printAll(rgs)
 	} else {
-		l.printGroups(rgs, j.FormatAmount)
+		l.printGroups(rgs)
 	}
 	return nil
 }
@@ -191,7 +195,7 @@ func (l *List) sort(rgs []record.Group) error {
 	return nil
 }
 
-func (l *List) printGroups(rgs []record.Group, fmtSum func(int64) string) {
+func (l *List) printGroups(rgs []record.Group) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Records", "Sum", "Budget", "Balance"})
 	table.SetBorder(false)
@@ -199,23 +203,41 @@ func (l *List) printGroups(rgs []record.Group, fmtSum func(int64) string) {
 		0, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT,
 	})
 	for _, rg := range rgs {
-		var sum int64
-		for _, r := range rg.Records {
-			sum += r.Amount
-		}
+		c, d := l.balanceColor(rg)
 		row := []string{
 			rg.Name,
 			strconv.Itoa(len(rg.Records)),
-			fmtSum(sum),
-			fmtSum(rg.Budget()),
-			fmtSum(rg.Balance()),
+			l.journal.FormatAmount(rg.Sum()),
+			l.journal.FormatAmount(rg.Budget()),
+			c + l.journal.FormatAmount(rg.Balance()) + d,
 		}
 		table.Append(row)
 	}
 	table.Render()
 }
 
-func (l *List) printAll(rgs []record.Group, fmtAmount func(int64) string) {
+func (l *List) colorize() bool {
+	switch l.Color {
+	case "always":
+		return true
+	case "never":
+		return false
+	}
+	return !l.Options.IsPipe
+}
+
+func (l *List) balanceColor(rg record.Group) (string, string) {
+	if !l.colorize() {
+		return "", ""
+	}
+	darkGray, lightRed, reset := "\033[1;30m", "\033[1;31m", "\033[0m"
+	if l.journal.Balanced(rg) {
+		return darkGray, reset
+	}
+	return lightRed, reset
+}
+
+func (l *List) printAll(rgs []record.Group) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
 	table.SetBorder(false)
@@ -231,7 +253,7 @@ func (l *List) printAll(rgs []record.Group, fmtAmount func(int64) string) {
 				r.ID(),
 				r.Time.Format("2006-01-02"),
 				r.Text,
-				fmtAmount(r.Amount),
+				l.journal.FormatAmount(r.Amount),
 			}
 			table.Append(row)
 		}

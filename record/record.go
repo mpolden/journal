@@ -66,6 +66,13 @@ func max(x, y int64) int64 {
 	return y
 }
 
+func abs(n int64) int64 {
+	if n < 0 {
+		return -n
+	}
+	return n
+}
+
 // NewReader returns a new reader for CSV-encoded records.
 func NewReader(rd io.Reader) Reader {
 	return &reader{
@@ -111,8 +118,15 @@ func (g *Group) Budget() int64 {
 
 // Balance returns the difference between the budget of this group and its sum. The balance is adjusted to the period of
 // the records contained in this group.
-func (g *Group) Balance() int64 {
-	return g.Budget() - g.Sum()
+func (g *Group) Balance() int64 { return g.Budget() - g.Sum() }
+
+// Balanced returns true if the balance of this group falls within the fraction f of the budget.
+func (g *Group) Balanced(f int64) bool {
+	if f == 0 || f == 1 {
+		return g.Balance() == 0
+	}
+	minBudget := abs(g.Budget() / f)
+	return abs(g.Balance()) <= minBudget
 }
 
 // AssortFunc uses groupFn to assort records into groups.

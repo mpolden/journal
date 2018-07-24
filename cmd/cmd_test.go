@@ -123,7 +123,7 @@ func TestList(t *testing.T) {
 	defer os.Remove(dataName)
 
 	var stdout, stderr bytes.Buffer
-	opts := Options{Config: confName, Writer: &stdout, Log: NewLogger(&stderr)}
+	opts := Options{Config: confName, Writer: &stdout, Log: NewLogger(&stderr), Color: "never"}
 	imp := Import{Options: opts, Reader: "csv"}
 	imp.Args.Account = "1234.56.78900"
 	imp.Args.File = dataName

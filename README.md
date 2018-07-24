@@ -43,6 +43,7 @@ Example:
 Database = "/home/user/journal.db"
 Comma = "."
 DefaultGroup = "*** UNMATCHED ***"
+BudgetSlack = 10
 
 [[accounts]]
 number = "1234.56.78900"
@@ -75,7 +76,12 @@ discard = true
 stored.
 
 `Comma` is the decimal separator to use when displaying monetary amounts. It
-defaults to `.`.
+defaults to `.`
+
+`BudgetSlack` sets the fraction of a budget that needs to be satisfied for a
+budget to be considered met. This is currently only used for colourisation of
+output where balances that are outside the budget fraction are colored red.
+Defaults to `0` which means that no slack will be applied.
 
 `DefaultGroup` is the default group name to use for records that are not matched
 by any groups. Defaults to `*** UNMATCHED ***`.

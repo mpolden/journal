@@ -38,6 +38,7 @@ type Config struct {
 	Database     string
 	Comma        string
 	DefaultGroup string
+	BudgetSlack  int64
 	Accounts     []Account
 	Groups       []Group
 }
@@ -49,6 +50,7 @@ type Journal struct {
 	db           *sql.Client
 	Comma        string
 	DefaultGroup string
+	BudgetSlack  int64
 }
 
 // Writes represents statistics of a journal's updates.
@@ -126,12 +128,16 @@ func New(conf Config) (*Journal, error) {
 	if defaultGroup == "" {
 		defaultGroup = "*** UNMATCHED ***"
 	}
+	if conf.BudgetSlack < 0 {
+		return nil, fmt.Errorf("invalid BudgetSlack: %d: value must be >= 0", conf.BudgetSlack)
+	}
 	return &Journal{
 		db:           db,
 		accounts:     conf.Accounts,
 		groups:       conf.Groups,
 		Comma:        comma,
 		DefaultGroup: defaultGroup,
+		BudgetSlack:  conf.BudgetSlack,
 	}, nil
 }
 
@@ -218,6 +224,11 @@ func (j *Journal) Assort(records []record.Record) []record.Group {
 // AssortPeriod assorts record groups into time periods using timeFn.
 func (j *Journal) AssortPeriod(records []record.Record, timeFn func(time.Time) time.Time) []record.Period {
 	return record.AssortPeriodFunc(records, timeFn, j.findGroup)
+}
+
+// Balanced returns whether the record group rg is balanced according to this journal's budget slack.
+func (j *Journal) Balanced(rg record.Group) bool {
+	return rg.Balanced(j.BudgetSlack)
 }
 
 func (j *Journal) findGroup(r record.Record) (record.Group, bool) {
