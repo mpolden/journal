@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3" // SQLite database driver
 	"github.com/pkg/errors"
 )
 
@@ -31,16 +31,19 @@ CREATE TABLE IF NOT EXISTS record (
 CREATE INDEX IF NOT EXISTS record_time_idx ON record (time);
 `
 
+// Client implements a client for a SQLite database.
 type Client struct {
 	db *sqlx.DB
 	mu sync.RWMutex
 }
 
+// Account represents a financial account.
 type Account struct {
 	Number string `db:"number"`
 	Name   string `db:"name"`
 }
 
+// Record represents a single financial record.
 type Record struct {
 	Time   int64  `db:"time"`
 	Text   string `db:"text"`
@@ -48,6 +51,7 @@ type Record struct {
 	Account
 }
 
+// New creates a new database client for given filename.
 func New(filename string) (*Client, error) {
 	db, err := sqlx.Connect("sqlite3", filename)
 	if err != nil {
@@ -72,6 +76,7 @@ func rowsAffected(result sql.Result) int64 {
 	return rowsAffected
 }
 
+// AddAccounts writes accounts to the database and returns the number of changed rows.
 func (c *Client) AddAccounts(accounts []Account) (int64, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -98,21 +103,25 @@ func (c *Client) AddAccounts(accounts []Account) (int64, error) {
 	return rows, tx.Commit()
 }
 
-func (c *Client) SelectAccounts(number string) ([]Account, error) {
+// SelectAccounts reads accounts from the database matching accountNumber. If accountNumber is an empty string, all
+// accounts are returned.
+func (c *Client) SelectAccounts(accountNumber string) ([]Account, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	var as []Account
 	query := "SELECT number, name FROM account"
 	args := []interface{}{}
-	if number != "" {
+	if accountNumber != "" {
 		query += " WHERE number = ?"
-		args = append(args, number)
+		args = append(args, accountNumber)
 	}
 	query += " ORDER BY number ASC"
 	err := c.db.Select(&as, query, args...)
 	return as, err
 }
 
+// AddRecords writes new records to belonging to accountNumber to the database, and returns the number of changed rows.
+// Any duplicate records are ignored.
 func (c *Client) AddRecords(accountNumber string, records []Record) (int64, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -157,10 +166,13 @@ VALUES ($1, $2, $3, $4)
 	return rows, tx.Commit()
 }
 
+// SelectRecords reads all records belonging to given accountNumber.
 func (c *Client) SelectRecords(accountNumber string) ([]Record, error) {
 	return c.SelectRecordsBetween(accountNumber, time.Time{}, time.Time{})
 }
 
+// SelectRecordsBetween reads all records belonging to given accountNumber, and occurring between the times since and
+// until.
 func (c *Client) SelectRecordsBetween(accountNumber string, since, until time.Time) ([]Record, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
