@@ -95,16 +95,16 @@ func (g *Group) Sum() int64 {
 
 // Budget returns the budget for this group. The budget is adjusted to the record period
 func (g *Group) Budget() int64 {
-	var since, until time.Time
+	var start, end time.Time
 	for _, r := range g.Records {
-		if since.IsZero() || r.Time.Before(since) {
-			since = r.Time
+		if start.IsZero() || r.Time.Before(start) {
+			start = r.Time
 		}
-		if r.Time.After(until) {
-			until = r.Time
+		if r.Time.After(end) {
+			end = r.Time
 		}
 	}
-	return g.MonthlyBudget * max(1, timeutil.MonthsBetween(since, until))
+	return g.MonthlyBudget * max(1, timeutil.MonthsBetween(start, end))
 }
 
 // Balance returns the difference between the budget of this group and its sum. The balance is adjusted to the record

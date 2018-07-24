@@ -2,12 +2,12 @@ package timeutil
 
 import "time"
 
-func MonthsBetween(a, b time.Time) int64 {
+func MonthsBetween(t, u time.Time) int64 {
 	var months int64
-	month := a.Month()
-	for a.Before(b) {
-		a = a.AddDate(0, 1, 0)
-		next := a.Month()
+	month := t.Month()
+	for t.Before(u) {
+		t = t.AddDate(0, 1, 0)
+		next := t.Month()
 		if next != month {
 			months++
 		}
