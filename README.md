@@ -6,11 +6,12 @@
 
 ## Features
 
-* Import records from multiple Norwegian banks, such as Eika Group (including
-local banks), Storebrand, Bank Norwegian and Komplett Bank
+* Import financial records from multiple Norwegian banks, such as Eika Group
+(including local banks), Storebrand, Bank Norwegian and Komplett Bank
 * Identify spending habits using automatic grouping of records
+* Define budgets per record group
 * Export grouped records for further processing in other programs
-* Persistent database of imported records
+* Persistent SQL database of imported records
 
 ## Installation
 
@@ -80,11 +81,11 @@ defaults to `.`
 
 `BudgetSlack` sets the fraction of a budget that needs to be satisfied for a
 budget to be considered met. This is currently only used for colourisation of
-output where balances that are outside the budget fraction are colored red.
-Defaults to `0` which means that no slack will be applied.
+output where balances outside the budget slack are colored red. Defaults to `0`
+which means that no slack will be applied.
 
-`DefaultGroup` is the default group name to use for records that are not matched
-by any groups. Defaults to `*** UNMATCHED ***`.
+`DefaultGroup` is the default group name to use for unmatched records. Defaults
+to `*** UNMATCHED ***`.
 
 `[[accounts]]` declares known bank accounts. The section can be repeated to
 define multiple accounts. Importing records for an unknown account is an error.
