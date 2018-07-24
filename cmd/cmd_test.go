@@ -135,9 +135,9 @@ func TestList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := `    GROUP    | RECORDS |   SUM   | BUDGET | BALANCE   
-+------------+---------+---------+--------+----------+
-  Everything |       3 | 1337.00 |   0.00 | -1337.00  
+	want := `    GROUP    | RECORDS |   SUM   | BUDGET | BALANCE  | SLACK  
++------------+---------+---------+--------+----------+-------+
+  Everything |       3 | 1337.00 |   0.00 | -1337.00 |  0.00  
 `
 	if got := stdout.String(); want != got {
 		t.Errorf("want %q, got %q", want, got)

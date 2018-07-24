@@ -169,11 +169,11 @@ See `journal import -h` for complete usage.
 Now that we have imported records, they can be listed with `journal ls`:
 
 ```
-journal: displaying records between 2018-07-01 and 2018-07-23
-          GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE
-+-----------------------+---------+----------+----------+---------+
-  Groceries             |       2 | -1000.00 | -1000.00 |    0.00
-  Public Transportation |       3 |  -105.00 |   -50.00 |   55.00
+journal: displaying records between 2018-07-01 and 2018-07-24
+          GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE | SLACK
++-----------------------+---------+----------+----------+---------+--------+
+  Groceries             |       2 | -1000.00 | -1000.00 |    0.00 | 100.00
+  Public Transportation |       3 |  -105.00 |   -50.00 |   55.00 |   0.00
 ```
 
 By default, only records within the current month are listed and sorted
@@ -198,12 +198,15 @@ If we want show older records, date ranges can be specified using `--since` and
 
 ```
 $ journal ls  --since=2018-01-01
-journal: displaying records between 2018-01-01 and 2018-07-23
-          GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE
-+-----------------------+---------+----------+----------+---------+
-  Groceries             |       5 | -3300.00 | -2000.00 | 1300.00
-  Public Transportation |       5 |  -175.00 |  -100.00 |   75.00
+journal: displaying records between 2018-01-01 and 2018-07-24
+          GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE | SLACK
++-----------------------+---------+----------+----------+---------+--------+
+  Groceries             |       5 | -3300.00 | -2000.00 | 1300.00 | 200.00
+  Public Transportation |       5 |  -175.00 |  -100.00 |   75.00 |   0.00
 ```
+
+Note that the slack and budget has been automatically adjusted to the number of
+months that contain records.
 
 Options also be combined:
 ```

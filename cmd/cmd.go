@@ -195,11 +195,15 @@ func (l *List) sort(rgs []record.Group) error {
 
 func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
-	table.SetHeader([]string{"Group", "Records", "Sum", "Budget", "Balance"})
+	headers := []string{"Group", "Records", "Sum", "Budget", "Balance", "Slack"}
+	table.SetHeader(headers)
 	table.SetBorder(false)
-	table.SetColumnAlignment([]int{
-		0, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT,
-	})
+	alignments := make([]int, len(headers))
+	// Align all columns, except the first, to the right
+	for i := 1; i < len(alignments); i++ {
+		alignments[i] = tablewriter.ALIGN_RIGHT
+	}
+	table.SetColumnAlignment(alignments)
 	for _, rg := range rgs {
 		c, d := l.balanceColor(rg)
 		row := []string{
@@ -208,6 +212,7 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 			fmtAmount(rg.Sum()),
 			fmtAmount(rg.Budget()),
 			c + fmtAmount(rg.Balance()) + d,
+			fmtAmount(rg.Slack()),
 		}
 		table.Append(row)
 	}
