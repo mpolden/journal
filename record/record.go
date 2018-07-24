@@ -104,7 +104,7 @@ func (g *Group) Budget() int64 {
 			end = r.Time
 		}
 	}
-	return g.MonthlyBudget * max(1, timeutil.MonthsBetween(start, end))
+	return g.MonthlyBudget * max(1, timeutil.CountMonths(start, end))
 }
 
 // Balance returns the difference between the budget of this group and its sum. The balance is adjusted to the record

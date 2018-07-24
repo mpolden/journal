@@ -22,7 +22,7 @@ func TestMonthsBetween(t *testing.T) {
 		{date(2017, 1, 1), date(2018, 3, 1), 14}, // Overlapping year
 	}
 	for i, tt := range tests {
-		if want, got := tt.months, MonthsBetween(tt.t, tt.u); want != got {
+		if want, got := tt.months, CountMonths(tt.t, tt.u); want != got {
 			t.Errorf("#%d: want %d, got %d", i, want, got)
 		}
 	}

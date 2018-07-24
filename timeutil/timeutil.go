@@ -2,7 +2,8 @@ package timeutil
 
 import "time"
 
-func MonthsBetween(t, u time.Time) int64 {
+// CountMonths counts the number of months between times t and u.
+func CountMonths(t, u time.Time) int64 {
 	var months int64
 	month := t.Month()
 	for t.Before(u) {
