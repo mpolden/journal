@@ -46,6 +46,7 @@ type Group struct {
 	Name          string
 	Records       []Record
 	MonthlyBudget int64
+	MonthlySlack  int64
 }
 
 // A Period stores record groups for specific moment in time.
@@ -64,13 +65,6 @@ func max(x, y int64) int64 {
 		return x
 	}
 	return y
-}
-
-func abs(n int64) int64 {
-	if n < 0 {
-		return -n
-	}
-	return n
 }
 
 // NewReader returns a new reader for CSV-encoded records.
@@ -92,18 +86,7 @@ func (r *Record) ID() string {
 	return fmt.Sprintf("%x", sum)[:10]
 }
 
-// Sum returns the total sum of all records in the group.
-func (g *Group) Sum() int64 {
-	var sum int64
-	for _, r := range g.Records {
-		sum += r.Amount
-	}
-	return sum
-}
-
-// Budget returns the budget for this group. The budget is adjusted to the period of the records contained in this
-// group.
-func (g *Group) Budget() int64 {
+func (g *Group) monthCount() int64 {
 	var start, end time.Time
 	for _, r := range g.Records {
 		if start.IsZero() || r.Time.Before(start) {
@@ -113,20 +96,42 @@ func (g *Group) Budget() int64 {
 			end = r.Time
 		}
 	}
-	return g.MonthlyBudget * max(1, timeutil.CountMonths(start, end))
+	return max(1, timeutil.CountMonths(start, end))
 }
 
-// Balance returns the difference between the budget of this group and its sum. The balance is adjusted to the period of
-// the records contained in this group.
+// Sum returns the total sum of all records in the group.
+func (g *Group) Sum() int64 {
+	var sum int64
+	for _, r := range g.Records {
+		sum += r.Amount
+	}
+	return sum
+}
+
+// Budget returns the budget for this group. The budget is adjusted to the record time range.
+func (g *Group) Budget() int64 { return g.MonthlyBudget * g.monthCount() }
+
+// Slack returns the slack for this group. The slack is adjusted to the record time range.
+func (g *Group) Slack() int64 { return g.MonthlySlack * g.monthCount() }
+
+// Balance returns the difference between the budget of this group and its sum. The balance is adjusted to the record
+// time range.
 func (g *Group) Balance() int64 { return g.Budget() - g.Sum() }
 
-// Balanced returns true if the balance of this group falls within the fraction f of the budget.
-func (g *Group) Balanced(f int64) bool {
-	if f == 0 || f == 1 {
-		return g.Balance() == 0
+// IsBalanced returns true if this group is balanced according to its budget and slack.
+func (g *Group) IsBalanced() bool {
+	balance := g.Balance()
+	slack := g.Slack()
+	if balance == 0 {
+		return true
 	}
-	minBudget := abs(g.Budget() / f)
-	return abs(g.Balance()) <= minBudget
+	if slack == 0 {
+		return balance == 0
+	}
+	if balance < 0 {
+		return balance >= slack
+	}
+	return balance > 0 && balance <= slack
 }
 
 // AssortFunc uses groupFn to assort records into groups.

@@ -161,7 +161,6 @@ func TestGroupMath(t *testing.T) {
 		sum      int64
 		budget   int64
 		balance  int64
-		fraction int64
 		balanced bool
 	}{
 		{Group{
@@ -176,7 +175,6 @@ func TestGroupMath(t *testing.T) {
 			1250,   // sum
 			500,    // budget
 			-750,   // balance
-			10,     // fraction
 			false}, // balanced
 		{Group{
 			Name:          "A",
@@ -189,11 +187,11 @@ func TestGroupMath(t *testing.T) {
 			-600,     // sum
 			-500 * 2, // budget
 			-400,     // balance
-			10,       // fraction
 			false},   // balanced
 		{Group{
 			Name:          "A",
 			MonthlyBudget: -500,
+			MonthlySlack:  50,
 			Records: []Record{
 				{Text: "T 1", Amount: -500},
 				{Text: "T 3", Amount: -50},
@@ -202,11 +200,24 @@ func TestGroupMath(t *testing.T) {
 			-550,  // sum
 			-500,  // budget
 			50,    // balance
-			10,    // fraction
 			true}, // balanced
 		{Group{
 			Name:          "A",
+			MonthlyBudget: -500,
+			MonthlySlack:  -50,
+			Records: []Record{
+				{Text: "T 1", Amount: -500},
+				{Text: "T 3", Amount: -50},
+			},
+		},
+			-550,   // sum
+			-500,   // budget
+			50,     // balance
+			false}, // balanced
+		{Group{
+			Name:          "A",
 			MonthlyBudget: 500,
+			MonthlySlack:  -60,
 			Records: []Record{
 				{Text: "T 1", Amount: 500},
 				{Text: "T 3", Amount: 50},
@@ -215,21 +226,7 @@ func TestGroupMath(t *testing.T) {
 			550,   // sum
 			500,   // budget
 			-50,   // balance
-			10,    // fraction
 			true}, // balanced
-		{Group{
-			Name:          "A",
-			MonthlyBudget: 500,
-			Records: []Record{
-				{Text: "T 1", Amount: 500},
-				{Text: "T 3", Amount: 60},
-			},
-		},
-			560,    // sum
-			500,    // budget
-			-60,    // balance
-			10,     // fraction
-			false}, // balanced
 		{Group{
 			Name:          "A",
 			MonthlyBudget: 560,
@@ -241,7 +238,19 @@ func TestGroupMath(t *testing.T) {
 			560,   // sum
 			560,   // budget
 			0,     // balance
-			0,     // fraction
+			true}, // balanced
+		{Group{
+			Name:          "A",
+			MonthlyBudget: -560,
+			MonthlySlack:  -50,
+			Records: []Record{
+				{Text: "T 1", Amount: -500},
+				{Text: "T 3", Amount: -60},
+			},
+		},
+			-560,  // sum
+			-560,  // budget
+			0,     // balance
 			true}, // balanced
 		{Group{
 			Name:          "A",
@@ -254,7 +263,6 @@ func TestGroupMath(t *testing.T) {
 			-6433,  // sum
 			-5000,  // budget
 			1433,   // balance
-			1,      // fraction
 			false}, // balanced
 	}
 	for i, tt := range tests {
@@ -267,7 +275,7 @@ func TestGroupMath(t *testing.T) {
 		if want, got := tt.balance, tt.g.Balance(); want != got {
 			t.Errorf("#%d: want Balance = %d, got %d", i, want, got)
 		}
-		if want, got := tt.balanced, tt.g.Balanced(tt.fraction); want != got {
+		if want, got := tt.balanced, tt.g.IsBalanced(); want != got {
 			t.Errorf("#%d: want Balanced = %t, got %t", i, want, got)
 		}
 	}

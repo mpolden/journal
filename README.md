@@ -44,7 +44,6 @@ Example:
 Database = "/home/user/journal.db"
 Comma = "."
 DefaultGroup = "*** UNMATCHED ***"
-BudgetSlack = 10
 
 [[accounts]]
 number = "1234.56.78900"
@@ -58,6 +57,7 @@ patterns = ["(?i)^Atb"]
 [[groups]]
 name = "Groceries"
 budget = -100000
+slack = 10000
 patterns = ["(?i)^Rema"]
 
 [[groups]]
@@ -78,11 +78,6 @@ stored.
 
 `Comma` is the decimal separator to use when displaying monetary amounts. It
 defaults to `.`
-
-`BudgetSlack` sets the fraction of a budget that needs to be satisfied for a
-budget to be considered met. This is currently only used for colourisation of
-output where balances outside the budget slack are colored red. Defaults to `0`
-which means that no slack will be applied.
 
 `DefaultGroup` is the default group name to use for unmatched records. Defaults
 to `*** UNMATCHED ***`.
@@ -111,6 +106,9 @@ total budget displayed will be `2 * -50000 = -100000`.
 
 Note that the budget is specified as one-hundredth of the currency. `budget =
 -50000` means a budget of *-500.00 NOK* .
+
+A fixed value budget slack may be set with `slack`. This is currently only used
+for colourisation of output where the balance differs from `budget + slack`.
 
 Unwanted records may pollute the journal (e.g. inter-account transfers), these
 records can be ignored entirely by setting `discard = true` on the matching

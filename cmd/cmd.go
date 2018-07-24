@@ -57,7 +57,6 @@ type List struct {
 	Args    struct {
 		Account string `description:"Only print records for given account number" positional-arg-name:"account-number"`
 	} `positional-args:"yes"`
-	journal *journal.Journal
 }
 
 // NewLogger creates a new preconfigured logger.
@@ -141,7 +140,6 @@ func (l *List) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
-	l.journal = j
 
 	s, u, err := timeRange(l.Since, l.Until)
 	if err != nil {
@@ -162,9 +160,9 @@ func (l *List) Execute(args []string) error {
 	l.Log.Printf("displaying records between %s and %s", s.Format(timeLayout), u.Format(timeLayout))
 
 	if l.Explain {
-		l.printAll(rgs)
+		l.printAll(rgs, j.FormatAmount)
 	} else {
-		l.printGroups(rgs)
+		l.printGroups(rgs, j.FormatAmount)
 	}
 	return nil
 }
@@ -195,7 +193,7 @@ func (l *List) sort(rgs []record.Group) error {
 	return nil
 }
 
-func (l *List) printGroups(rgs []record.Group) {
+func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Records", "Sum", "Budget", "Balance"})
 	table.SetBorder(false)
@@ -207,9 +205,9 @@ func (l *List) printGroups(rgs []record.Group) {
 		row := []string{
 			rg.Name,
 			strconv.Itoa(len(rg.Records)),
-			l.journal.FormatAmount(rg.Sum()),
-			l.journal.FormatAmount(rg.Budget()),
-			c + l.journal.FormatAmount(rg.Balance()) + d,
+			fmtAmount(rg.Sum()),
+			fmtAmount(rg.Budget()),
+			c + fmtAmount(rg.Balance()) + d,
 		}
 		table.Append(row)
 	}
@@ -230,14 +228,21 @@ func (l *List) balanceColor(rg record.Group) (string, string) {
 	if !l.colorize() {
 		return "", ""
 	}
-	darkGray, lightRed, reset := "\033[1;30m", "\033[1;31m", "\033[0m"
-	if l.journal.Balanced(rg) {
+	const (
+		darkGray   = "\033[1;30m"
+		lightRed   = "\033[1;31m"
+		lightGreen = "\033[1;32m"
+		reset      = "\033[0m"
+	)
+	if rg.IsBalanced() {
 		return darkGray, reset
+	} else if rg.Balance() < 0 {
+		return lightGreen, reset
 	}
 	return lightRed, reset
 }
 
-func (l *List) printAll(rgs []record.Group) {
+func (l *List) printAll(rgs []record.Group, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
 	table.SetBorder(false)
@@ -253,7 +258,7 @@ func (l *List) printAll(rgs []record.Group) {
 				r.ID(),
 				r.Time.Format("2006-01-02"),
 				r.Text,
-				l.journal.FormatAmount(r.Amount),
+				fmtAmount(r.Amount),
 			}
 			table.Append(row)
 		}

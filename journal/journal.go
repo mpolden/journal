@@ -27,6 +27,7 @@ type Group struct {
 	Name     string
 	Account  string
 	Budget   int64
+	Slack    int64
 	Patterns []string
 	patterns []*regexp.Regexp
 	IDs      []string
@@ -38,7 +39,6 @@ type Config struct {
 	Database     string
 	Comma        string
 	DefaultGroup string
-	BudgetSlack  int64
 	Accounts     []Account
 	Groups       []Group
 }
@@ -50,7 +50,6 @@ type Journal struct {
 	db           *sql.Client
 	Comma        string
 	DefaultGroup string
-	BudgetSlack  int64
 }
 
 // Writes represents statistics of a journal's updates.
@@ -128,16 +127,12 @@ func New(conf Config) (*Journal, error) {
 	if defaultGroup == "" {
 		defaultGroup = "*** UNMATCHED ***"
 	}
-	if conf.BudgetSlack < 0 {
-		return nil, fmt.Errorf("invalid BudgetSlack: %d: value must be >= 0", conf.BudgetSlack)
-	}
 	return &Journal{
 		db:           db,
 		accounts:     conf.Accounts,
 		groups:       conf.Groups,
 		Comma:        comma,
 		DefaultGroup: defaultGroup,
-		BudgetSlack:  conf.BudgetSlack,
 	}, nil
 }
 
@@ -226,11 +221,6 @@ func (j *Journal) AssortPeriod(records []record.Record, timeFn func(time.Time) t
 	return record.AssortPeriodFunc(records, timeFn, j.findGroup)
 }
 
-// Balanced returns whether the record group rg is balanced according to this journal's budget slack.
-func (j *Journal) Balanced(rg record.Group) bool {
-	return rg.Balanced(j.BudgetSlack)
-}
-
 func (j *Journal) findGroup(r record.Record) *record.Group {
 	for _, g := range j.groups {
 		if g.Account != "" && g.Account != r.Account.Number {
@@ -241,7 +231,11 @@ func (j *Journal) findGroup(r record.Record) *record.Group {
 				if g.Discard {
 					return nil
 				}
-				return &record.Group{Name: g.Name, MonthlyBudget: g.Budget}
+				return &record.Group{
+					Name:          g.Name,
+					MonthlyBudget: g.Budget,
+					MonthlySlack:  g.Slack,
+				}
 			}
 		}
 	}
@@ -254,7 +248,11 @@ func (j *Journal) findGroup(r record.Record) *record.Group {
 				if g.Discard {
 					return nil
 				}
-				return &record.Group{Name: g.Name, MonthlyBudget: g.Budget}
+				return &record.Group{
+					Name:          g.Name,
+					MonthlyBudget: g.Budget,
+					MonthlySlack:  g.Slack,
+				}
 			}
 		}
 	}
