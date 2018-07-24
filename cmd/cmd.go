@@ -195,6 +195,9 @@ func (l *List) printGroups(rgs []record.Group, fmtSum func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Records", "Sum", "Budget", "Balance"})
 	table.SetBorder(false)
+	table.SetColumnAlignment([]int{
+		0, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_RIGHT,
+	})
 	for _, rg := range rgs {
 		var sum int64
 		for _, r := range rg.Records {
@@ -216,6 +219,9 @@ func (l *List) printAll(rgs []record.Group, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
 	table.SetBorder(false)
+	table.SetColumnAlignment([]int{
+		0, 0, 0, 0, 0, 0, tablewriter.ALIGN_RIGHT,
+	})
 	for _, rg := range rgs {
 		for _, r := range rg.Records {
 			row := []string{
