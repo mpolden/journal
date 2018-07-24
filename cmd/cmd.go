@@ -18,12 +18,14 @@ import (
 
 const timeLayout = "2006-01-02"
 
+// Options represents command line options that are shared across sub-commands.
 type Options struct {
 	Config string `short:"f" long:"config" description:"Config file" value-name:"FILE" default:"~/.journalrc"`
 	Writer io.Writer
 	Log    *log.Logger
 }
 
+// Import represents options for the import sub-command.
 type Import struct {
 	Options
 	Reader string `short:"r" long:"reader" description:"Name of reader to use when importing data" choice:"csv" choice:"komplett" choice:"komplettsparing" choice:"norwegian" default:"csv"`
@@ -33,6 +35,7 @@ type Import struct {
 	} `positional-args:"yes" required:"yes"`
 }
 
+// Export represents options for the export sub-command.
 type Export struct {
 	Options
 	Since string `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
@@ -42,6 +45,7 @@ type Export struct {
 	} `positional-args:"yes"`
 }
 
+// List represents options for the export sub-command.
 type List struct {
 	Options
 	Explain bool   `short:"e" long:"explain" description:"Print all records and their group"`
@@ -53,6 +57,7 @@ type List struct {
 	} `positional-args:"yes"`
 }
 
+// Execute imports records into the journal from a file.
 func (i *Import) Execute(args []string) error {
 	f, err := os.Open(i.Args.File)
 	if err != nil {
@@ -124,6 +129,7 @@ func timeRange(since, until string) (time.Time, time.Time, error) {
 	return s, u, nil
 }
 
+// Execute lists records contained in the journal.
 func (l *List) Execute(args []string) error {
 	j, err := journal.FromConfig(l.Config)
 	if err != nil {
@@ -224,6 +230,7 @@ func (l *List) printAll(rgs []record.Group, fmtAmount func(int64) string) {
 	table.Render()
 }
 
+// Execute exports records from the journal.
 func (e *Export) Execute(args []string) error {
 	j, err := journal.FromConfig(e.Config)
 	if err != nil {
