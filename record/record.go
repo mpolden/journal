@@ -131,7 +131,7 @@ func (g *Group) IsBalanced() bool {
 	if balance < 0 {
 		return balance >= slack
 	}
-	return balance > 0 && balance <= slack
+	return balance <= slack
 }
 
 // AssortFunc uses groupFn to assort records into groups.
