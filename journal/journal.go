@@ -16,11 +16,13 @@ import (
 	"github.com/mpolden/journal/sql"
 )
 
+// Account represents a financial account.
 type Account struct {
 	Number string
 	Name   string
 }
 
+// Group represents a group configuration which decides how records should be assorted into groups.
 type Group struct {
 	Name     string
 	Account  string
@@ -31,6 +33,7 @@ type Group struct {
 	Discard  bool
 }
 
+// Config represents a journal's configuration.
 type Config struct {
 	Database     string
 	Comma        string
@@ -39,6 +42,7 @@ type Config struct {
 	Groups       []Group
 }
 
+// Journal implements a journal of financial records.
 type Journal struct {
 	accounts     []Account
 	groups       []Group
@@ -47,6 +51,7 @@ type Journal struct {
 	DefaultGroup string
 }
 
+// Writes represents statistics of a journal's updates.
 type Writes struct {
 	Account int64
 	Record  int64
@@ -86,6 +91,7 @@ func readConfig(r io.Reader) (Config, error) {
 	return conf, err
 }
 
+// FromConfig creates a new journal from a configuration file located at name.
 func FromConfig(name string) (*Journal, error) {
 	if name == "~/.journalrc" {
 		home := os.Getenv("HOME")
@@ -103,6 +109,7 @@ func FromConfig(name string) (*Journal, error) {
 	return New(conf)
 }
 
+// New creates a new journal from the given configuration.
 func New(conf Config) (*Journal, error) {
 	if err := conf.load(); err != nil {
 		return nil, err
@@ -128,6 +135,7 @@ func New(conf Config) (*Journal, error) {
 	}, nil
 }
 
+// FormatAmount formats number n as a financial amount.
 func (j *Journal) FormatAmount(n int64) string {
 	i := n / 100
 	f := n % 100
@@ -144,6 +152,7 @@ func (j *Journal) FormatAmount(n int64) string {
 	return buf.String()
 }
 
+// Export writes periods to writer w using CSV-encoding. The timeLayout defines the format of time fields.
 func (j *Journal) Export(w io.Writer, periods []record.Period, timeLayout string) error {
 	csv := csv.NewWriter(w)
 	for _, p := range periods {
@@ -166,6 +175,7 @@ func (j *Journal) writeAccounts() (int64, error) {
 	return j.db.AddAccounts(as)
 }
 
+// Write writes records for accountNumber into the journal.
 func (j *Journal) Write(accountNumber string, records []record.Record) (Writes, error) {
 	var writes Writes
 	n, err := j.writeAccounts()
@@ -182,6 +192,7 @@ func (j *Journal) Write(accountNumber string, records []record.Record) (Writes, 
 	return writes, err
 }
 
+// Read reads records for accountNumber between the times since and until from the journal.
 func (j *Journal) Read(accountNumber string, since, until time.Time) ([]record.Record, error) {
 	rs, err := j.db.SelectRecordsBetween(accountNumber, since, until)
 	if err != nil {
@@ -199,7 +210,7 @@ func (j *Journal) Read(accountNumber string, since, until time.Time) ([]record.R
 	return records, nil
 }
 
-// Assorts assorts records into groups using this journal's configuration.
+// Assort assorts records into groups using this journal's configuration.
 func (j *Journal) Assort(records []record.Record) []record.Group {
 	return record.AssortFunc(records, j.findGroup)
 }
