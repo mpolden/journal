@@ -108,7 +108,7 @@ Note that the budget is specified as one-hundredth of the currency. `budget =
 -50000` means a budget of *-500.00 NOK* .
 
 A fixed value budget slack may be set with `slack`. This is currently only used
-for colourisation of output where the balance differs from `budget + slack`.
+for colourisation of output where the balance differs from the slack.
 
 Unwanted records may pollute the journal (e.g. inter-account transfers), these
 records can be ignored entirely by setting `discard = true` on the matching
