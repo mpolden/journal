@@ -96,15 +96,14 @@ func TestAssortFunc(t *testing.T) {
 		{Time: date(2017, 1, 1), Text: "Bar", Amount: 42},
 		{Time: date(2017, 1, 1), Text: "Baz", Amount: 42},
 	}
-	gs := AssortFunc(rs, func(r Record) (Group, bool) {
+	gs := AssortFunc(rs, func(r Record) *Group {
 		switch r.Text {
 		case "Foo 1", "Foo 2":
-			return Group{Name: "A"}, true
+			return &Group{Name: "A"}
 		case "Bar":
-			return Group{Name: "B"}, true
-		default:
-			return Group{}, false
+			return &Group{Name: "B"}
 		}
+		return nil
 	})
 	var tests = []struct {
 		g Group
@@ -135,8 +134,8 @@ func TestAssortPeriodFunc(t *testing.T) {
 		func(t time.Time) time.Time {
 			return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
 		},
-		func(r Record) (Group, bool) {
-			return Group{Name: "A"}, true
+		func(r Record) *Group {
+			return &Group{Name: "A"}
 		})
 
 	var tests = []struct {

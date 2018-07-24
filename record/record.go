@@ -130,16 +130,16 @@ func (g *Group) Balanced(f int64) bool {
 }
 
 // AssortFunc uses groupFn to assort records into groups.
-func AssortFunc(records []Record, assortFn func(Record) (Group, bool)) []Group {
+func AssortFunc(records []Record, assortFn func(Record) *Group) []Group {
 	m := make(map[string]Group)
 	for _, r := range records {
-		target, ok := assortFn(r)
-		if !ok {
+		target := assortFn(r)
+		if target == nil {
 			continue
 		}
 		g, ok := m[target.Name]
 		if !ok {
-			g = target
+			g = *target
 		}
 		g.Records = append(g.Records, r)
 		m[target.Name] = g
@@ -153,7 +153,7 @@ func AssortFunc(records []Record, assortFn func(Record) (Group, bool)) []Group {
 }
 
 // AssortPeriodFunc assorts records into groups grouped by timeFn.
-func AssortPeriodFunc(records []Record, timeFn func(time.Time) time.Time, assortFn func(Record) (Group, bool)) []Period {
+func AssortPeriodFunc(records []Record, timeFn func(time.Time) time.Time, assortFn func(Record) *Group) []Period {
 	m := make(map[time.Time][]Record)
 	for _, r := range records {
 		key := timeFn(r.Time)

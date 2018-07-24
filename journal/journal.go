@@ -231,14 +231,17 @@ func (j *Journal) Balanced(rg record.Group) bool {
 	return rg.Balanced(j.BudgetSlack)
 }
 
-func (j *Journal) findGroup(r record.Record) (record.Group, bool) {
+func (j *Journal) findGroup(r record.Record) *record.Group {
 	for _, g := range j.groups {
 		if g.Account != "" && g.Account != r.Account.Number {
 			continue
 		}
 		for _, id := range g.IDs {
 			if r.ID() == id {
-				return record.Group{Name: g.Name, MonthlyBudget: g.Budget}, !g.Discard
+				if g.Discard {
+					return nil
+				}
+				return &record.Group{Name: g.Name, MonthlyBudget: g.Budget}
 			}
 		}
 	}
@@ -248,9 +251,12 @@ func (j *Journal) findGroup(r record.Record) (record.Group, bool) {
 		}
 		for _, p := range g.patterns {
 			if p.MatchString(r.Text) {
-				return record.Group{Name: g.Name, MonthlyBudget: g.Budget}, !g.Discard
+				if g.Discard {
+					return nil
+				}
+				return &record.Group{Name: g.Name, MonthlyBudget: g.Budget}
 			}
 		}
 	}
-	return record.Group{Name: j.DefaultGroup}, true
+	return &record.Group{Name: j.DefaultGroup}
 }
