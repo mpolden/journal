@@ -57,6 +57,9 @@ type List struct {
 	} `positional-args:"yes"`
 }
 
+// NewLogger creates a new preconfigured logger.
+func NewLogger(w io.Writer) *log.Logger { return log.New(w, "journal: ", 0) }
+
 // Execute imports records into the journal from a file.
 func (i *Import) Execute(args []string) error {
 	f, err := os.Open(i.Args.File)
@@ -165,13 +168,13 @@ func (l *List) Execute(args []string) error {
 func (l *List) sort(rgs []record.Group) error {
 	switch l.OrderBy {
 	case "name":
-		break // default
-	case "sum":
-		sort.Slice(rgs, func(i, j int) bool { return rgs[i].Sum() < rgs[j].Sum() })
-	default:
+		break // default sorting in journal
+	case "date":
 		if !l.Explain {
 			return fmt.Errorf("grouped output cannot be ordered by date")
 		}
+	default:
+		sort.Slice(rgs, func(i, j int) bool { return rgs[i].Sum() < rgs[j].Sum() })
 	}
 	// Sort records in each group
 	for _, rg := range rgs {

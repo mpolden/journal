@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/jessevdk/go-flags"
@@ -10,7 +9,7 @@ import (
 
 func main() {
 	p := flags.NewParser(nil, flags.HelpFlag|flags.PassDoubleDash)
-	log := log.New(os.Stderr, "journal: ", 0)
+	log := cmd.NewLogger(os.Stderr)
 	opts := cmd.Options{Log: log, Writer: os.Stdout}
 
 	imp := cmd.Import{Options: opts}
