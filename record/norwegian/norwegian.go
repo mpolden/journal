@@ -18,19 +18,21 @@ const (
 	thousandSeparator = ","
 )
 
-type reader struct {
+// Reader implements a reader for Norwegian-encoded (XLSX) records.
+type Reader struct {
 	rd       io.Reader
 	replacer *strings.Replacer
 }
 
-func NewReader(rd io.Reader) record.Reader {
-	return &reader{
+// NewReader returns a new reader for Norwegian-encoded records.
+func NewReader(rd io.Reader) *Reader {
+	return &Reader{
 		rd:       rd,
 		replacer: strings.NewReplacer(decimalSeparator, "", thousandSeparator, ""),
 	}
 }
 
-func (r *reader) parseAmount(s string) (int64, error) {
+func (r *Reader) parseAmount(s string) (int64, error) {
 	if strings.LastIndex(s, decimalSeparator) == len(s)-2 { // Pad single digit decimal
 		s += "0"
 	}
@@ -46,7 +48,7 @@ func (r *reader) parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
-func (r *reader) Read() ([]record.Record, error) {
+func (r *Reader) Read() ([]record.Record, error) {
 	data, err := ioutil.ReadAll(r.rd)
 	if err != nil {
 		return nil, err

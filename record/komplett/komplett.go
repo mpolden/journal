@@ -18,7 +18,8 @@ const (
 	timeLayout        = "02.01.2006"
 )
 
-type reader struct {
+// Reader implements a reader for Komplett-encoded (HTML or JSON) records.
+type Reader struct {
 	rd       io.Reader
 	replacer *strings.Replacer
 	JSON     bool
@@ -61,14 +62,15 @@ func (a *jsonAmount) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func NewReader(rd io.Reader) *reader {
-	return &reader{
+// NewReader returns a new reader for Komplett-encoded records.
+func NewReader(rd io.Reader) *Reader {
+	return &Reader{
 		rd:       rd,
 		replacer: strings.NewReplacer(decimalSeparator, "", thousandSeparator, ""),
 	}
 }
 
-func (r *reader) parseAmount(s string) (int64, error) {
+func (r *Reader) parseAmount(s string) (int64, error) {
 	v := r.replacer.Replace(s)
 	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
@@ -78,14 +80,14 @@ func (r *reader) parseAmount(s string) (int64, error) {
 	return n * -1, nil
 }
 
-func (r *reader) Read() ([]record.Record, error) {
+func (r *Reader) Read() ([]record.Record, error) {
 	if r.JSON {
 		return r.readJSON()
 	}
 	return r.readHTML()
 }
 
-func (r *reader) readHTML() ([]record.Record, error) {
+func (r *Reader) readHTML() ([]record.Record, error) {
 	doc, err := goquery.NewDocumentFromReader(r.rd)
 	if err != nil {
 		return nil, err
@@ -120,7 +122,7 @@ func (r *reader) readHTML() ([]record.Record, error) {
 	return rs, nil
 }
 
-func (r *reader) readJSON() ([]record.Record, error) {
+func (r *Reader) readJSON() ([]record.Record, error) {
 	var jrs []jsonRecord
 	if err := json.NewDecoder(r.rd).Decode(&jrs); err != nil {
 		return nil, err

@@ -66,6 +66,7 @@ func max(x, y int64) int64 {
 	return y
 }
 
+// NewReader returns a new reader for CSV-encoded records.
 func NewReader(rd io.Reader) Reader {
 	return &reader{
 		rd:       rd,
@@ -73,7 +74,7 @@ func NewReader(rd io.Reader) Reader {
 	}
 }
 
-// ID returns a shortened SHA-1 hash of the fields in this record
+// ID returns a shortened SHA-1 hash of the fields in this record.
 func (r *Record) ID() string {
 	var buf bytes.Buffer
 	buf.WriteString(r.Account.Number)
@@ -84,7 +85,7 @@ func (r *Record) ID() string {
 	return fmt.Sprintf("%x", sum)[:10]
 }
 
-// Sum returns the total sum of all records in the group
+// Sum returns the total sum of all records in the group.
 func (g *Group) Sum() int64 {
 	var sum int64
 	for _, r := range g.Records {
@@ -93,7 +94,8 @@ func (g *Group) Sum() int64 {
 	return sum
 }
 
-// Budget returns the budget for this group. The budget is adjusted to the record period
+// Budget returns the budget for this group. The budget is adjusted to the period of the records contained in this
+// group.
 func (g *Group) Budget() int64 {
 	var start, end time.Time
 	for _, r := range g.Records {
@@ -107,8 +109,8 @@ func (g *Group) Budget() int64 {
 	return g.MonthlyBudget * max(1, timeutil.CountMonths(start, end))
 }
 
-// Balance returns the difference between the budget of this group and its sum. The balance is adjusted to the record
-// period.
+// Balance returns the difference between the budget of this group and its sum. The balance is adjusted to the period of
+// the records contained in this group.
 func (g *Group) Balance() int64 {
 	return g.Budget() - g.Sum()
 }
@@ -151,8 +153,8 @@ func AssortPeriodFunc(records []Record, timeFn func(time.Time) time.Time, assort
 	return ps
 }
 
-func (d *reader) parseAmount(s string) (int64, error) {
-	v := d.replacer.Replace(s)
+func (r *reader) parseAmount(s string) (int64, error) {
+	v := r.replacer.Replace(s)
 	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
 		return 0, err
@@ -160,7 +162,7 @@ func (d *reader) parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
-// Read all records from the reader.
+// Read all records from the underlying reader.
 func (r *reader) Read() ([]Record, error) {
 	buf := bufio.NewReader(r.rd)
 	// Peek at the first rune see if the file starts with a byte order mark
