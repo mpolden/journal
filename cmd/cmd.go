@@ -195,9 +195,8 @@ func (l *List) sort(rgs []record.Group) error {
 
 func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
-	headers := []string{"Group", "Records", "Sum", "Budget", "Balance", "Slack"}
+	headers := []string{"Group", "Records", "Sum", "Budget", "Slack", "Balance"}
 	table.SetHeader(headers)
-	table.SetBorder(false)
 	alignments := make([]int, len(headers))
 	// Align all columns, except the first, to the right
 	for i := 1; i < len(alignments); i++ {
@@ -211,8 +210,8 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 			strconv.Itoa(len(rg.Records)),
 			fmtAmount(rg.Sum()),
 			fmtAmount(rg.Budget()),
-			c + fmtAmount(rg.Balance()) + d,
 			fmtAmount(rg.Slack()),
+			c + fmtAmount(rg.Balance()) + d,
 		}
 		table.Append(row)
 	}
@@ -250,7 +249,6 @@ func (l *List) balanceColor(rg record.Group) (string, string) {
 func (l *List) printAll(rgs []record.Group, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
-	table.SetBorder(false)
 	table.SetColumnAlignment([]int{
 		0, 0, 0, 0, 0, 0, tablewriter.ALIGN_RIGHT,
 	})

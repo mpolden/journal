@@ -135,11 +135,14 @@ func TestList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := `    GROUP    | RECORDS |   SUM   | BUDGET | BALANCE  | SLACK  
-+------------+---------+---------+--------+----------+-------+
-  Everything |       3 | 1337.00 |   0.00 | -1337.00 |  0.00  
+	want := `+------------+---------+---------+--------+-------+----------+
+|   GROUP    | RECORDS |   SUM   | BUDGET | SLACK | BALANCE  |
++------------+---------+---------+--------+-------+----------+
+| Everything |       3 | 1337.00 |   0.00 |  0.00 | -1337.00 |
++------------+---------+---------+--------+-------+----------+
 `
 	if got := stdout.String(); want != got {
+		fmt.Println(got)
 		t.Errorf("want %q, got %q", want, got)
 	}
 
@@ -150,11 +153,13 @@ func TestList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want = `    GROUP    |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |     TEXT      | AMOUNT   
+	want = `+------------+---------------+--------------+------------+------------+---------------+---------+
+|   GROUP    |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |     TEXT      | AMOUNT  |
 +------------+---------------+--------------+------------+------------+---------------+---------+
-  Everything | 1234.56.78900 | My account 1 | 66e7fcce66 | 2017-03-10 | Transaction 2 |  -42.00  
-  Everything | 1234.56.78900 | My account 1 | 11485ce462 | 2017-04-20 | Transaction 3 |   42.00  
-  Everything | 1234.56.78900 | My account 1 | ed5c019f5d | 2017-02-01 | Transaction 1 | 1337.00  
+| Everything | 1234.56.78900 | My account 1 | 66e7fcce66 | 2017-03-10 | Transaction 2 |  -42.00 |
+| Everything | 1234.56.78900 | My account 1 | 11485ce462 | 2017-04-20 | Transaction 3 |   42.00 |
+| Everything | 1234.56.78900 | My account 1 | ed5c019f5d | 2017-02-01 | Transaction 1 | 1337.00 |
++------------+---------------+--------------+------------+------------+---------------+---------+
 `
 	if got := stdout.String(); want != got {
 		t.Errorf("want %q, got %q", want, got)

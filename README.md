@@ -169,11 +169,14 @@ See `journal import -h` for complete usage.
 Now that we have imported records, they can be listed with `journal ls`:
 
 ```
-journal: displaying records between 2018-07-01 and 2018-07-24
-          GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE | SLACK
-+-----------------------+---------+----------+----------+---------+--------+
-  Groceries             |       2 | -1000.00 | -1000.00 |    0.00 | 100.00
-  Public Transportation |       3 |  -105.00 |   -50.00 |   55.00 |   0.00
+$ journal ls
+journal: displaying records between 2018-07-01 and 2018-07-25
++-----------------------+---------+----------+----------+--------+---------+
+|         GROUP         | RECORDS |   SUM    |  BUDGET  | SLACK  | BALANCE |
++-----------------------+---------+----------+----------+--------+---------+
+| Groceries             |       2 | -1000.00 | -1000.00 | 100.00 |    0.00 |
+| Public Transportation |       3 |  -105.00 |   -50.00 |   0.00 |   55.00 |
++-----------------------+---------+----------+----------+--------+---------+
 ```
 
 By default, only records within the current month are listed and sorted
@@ -183,26 +186,31 @@ Records are grouped together according to configured match groups. If we want to
 understand a record grouping, we can list individual records and their group:
 
 ```
-journal: displaying records between 2018-07-01 and 2018-07-23
-          GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    | AMOUNT
+$ journal ls --explain
+journal: displaying records between 2018-07-01 and 2018-07-25
 +-----------------------+---------------+--------------+------------+------------+-----------+---------+
-  Groceries             | 1234.56.78900 | Example Bank | 77c2a500e1 | 2018-07-05 | Rema 1000 | -750.00
-  Groceries             | 1234.56.78900 | Example Bank | 8f864212ce | 2018-07-01 | Rema 1000 | -250.00
-  Public Transportation | 1234.56.78900 | Example Bank | 2e25c40379 | 2018-07-15 | Atb       |  -35.00
-  Public Transportation | 1234.56.78900 | Example Bank | 84ca136809 | 2018-07-07 | Atb       |  -35.00
-  Public Transportation | 1234.56.78900 | Example Bank | 5833456f0b | 2018-07-02 | Atb       |  -35.00
+|         GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    | AMOUNT  |
++-----------------------+---------------+--------------+------------+------------+-----------+---------+
+| Groceries             | 1234.56.78900 | Example Bank | 77c2a500e1 | 2018-07-05 | Rema 1000 | -750.00 |
+| Groceries             | 1234.56.78900 | Example Bank | 8f864212ce | 2018-07-01 | Rema 1000 | -250.00 |
+| Public Transportation | 1234.56.78900 | Example Bank | 2e25c40379 | 2018-07-15 | Atb       |  -35.00 |
+| Public Transportation | 1234.56.78900 | Example Bank | 84ca136809 | 2018-07-07 | Atb       |  -35.00 |
+| Public Transportation | 1234.56.78900 | Example Bank | 5833456f0b | 2018-07-02 | Atb       |  -35.00 |
++-----------------------+---------------+--------------+------------+------------+-----------+---------+
 ```
 
 If we want show older records, date ranges can be specified using `--since` and
 `--until`:
 
 ```
-$ journal ls  --since=2018-01-01
-journal: displaying records between 2018-01-01 and 2018-07-24
-          GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE | SLACK
-+-----------------------+---------+----------+----------+---------+--------+
-  Groceries             |       5 | -3300.00 | -2000.00 | 1300.00 | 200.00
-  Public Transportation |       5 |  -175.00 |  -100.00 |   75.00 |   0.00
+$ journal ls --since=2018-06-01 --until=2018-06-30
+journal: displaying records between 2018-06-01 and 2018-06-30
++-----------------------+---------+----------+----------+--------+---------+
+|         GROUP         | RECORDS |   SUM    |  BUDGET  | SLACK  | BALANCE |
++-----------------------+---------+----------+----------+--------+---------+
+| Groceries             |       3 | -2300.00 | -1000.00 | 100.00 | 1300.00 |
+| Public Transportation |       2 |   -70.00 |   -50.00 |   0.00 |   20.00 |
++-----------------------+---------+----------+----------+--------+---------+
 ```
 
 Note that the slack and budget has been automatically adjusted to the number of
@@ -211,19 +219,21 @@ months that contain records.
 Options also be combined:
 ```
 $ journal ls --since=2018-01-01 --explain
-journal: displaying records between 2018-01-01 and 2018-07-23
-          GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    |  AMOUNT
+journal: displaying records between 2018-01-01 and 2018-07-25
 +-----------------------+---------------+--------------+------------+------------+-----------+----------+
-  Groceries             | 1234.56.78900 | Example Bank | e6c18424ba | 2018-06-01 | Rema 1000 | -1000.00
-  Groceries             | 1234.56.78900 | Example Bank | b6b2496771 | 2018-06-09 | Rema 1000 |  -800.00
-  Groceries             | 1234.56.78900 | Example Bank | 77c2a500e1 | 2018-07-05 | Rema 1000 |  -750.00
-  Groceries             | 1234.56.78900 | Example Bank | 2e1aa3cf1a | 2018-06-05 | Rema 1000 |  -500.00
-  Groceries             | 1234.56.78900 | Example Bank | 8f864212ce | 2018-07-01 | Rema 1000 |  -250.00
-  Public Transportation | 1234.56.78900 | Example Bank | 2e25c40379 | 2018-07-15 | Atb       |   -35.00
-  Public Transportation | 1234.56.78900 | Example Bank | 84ca136809 | 2018-07-07 | Atb       |   -35.00
-  Public Transportation | 1234.56.78900 | Example Bank | 5833456f0b | 2018-07-02 | Atb       |   -35.00
-  Public Transportation | 1234.56.78900 | Example Bank | 2e8e1ac9e1 | 2018-06-15 | Atb       |   -35.00
-  Public Transportation | 1234.56.78900 | Example Bank | 84c948c456 | 2018-06-07 | Atb       |   -35.00
+|         GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    |  AMOUNT  |
++-----------------------+---------------+--------------+------------+------------+-----------+----------+
+| Groceries             | 1234.56.78900 | Example Bank | e6c18424ba | 2018-06-01 | Rema 1000 | -1000.00 |
+| Groceries             | 1234.56.78900 | Example Bank | b6b2496771 | 2018-06-09 | Rema 1000 |  -800.00 |
+| Groceries             | 1234.56.78900 | Example Bank | 77c2a500e1 | 2018-07-05 | Rema 1000 |  -750.00 |
+| Groceries             | 1234.56.78900 | Example Bank | 2e1aa3cf1a | 2018-06-05 | Rema 1000 |  -500.00 |
+| Groceries             | 1234.56.78900 | Example Bank | 8f864212ce | 2018-07-01 | Rema 1000 |  -250.00 |
+| Public Transportation | 1234.56.78900 | Example Bank | 2e25c40379 | 2018-07-15 | Atb       |   -35.00 |
+| Public Transportation | 1234.56.78900 | Example Bank | 84ca136809 | 2018-07-07 | Atb       |   -35.00 |
+| Public Transportation | 1234.56.78900 | Example Bank | 5833456f0b | 2018-07-02 | Atb       |   -35.00 |
+| Public Transportation | 1234.56.78900 | Example Bank | 2e8e1ac9e1 | 2018-06-15 | Atb       |   -35.00 |
+| Public Transportation | 1234.56.78900 | Example Bank | 84c948c456 | 2018-06-07 | Atb       |   -35.00 |
++-----------------------+---------------+--------------+------------+------------+-----------+----------+
 ```
 
 See `journal ls -h` for complete usage.
@@ -235,7 +245,7 @@ Record groups can be exported to
 processing in other programs such as a spreadsheet.
 
 ```
-journal export --since=2018-01-01
+$ journal export --since=2018-01-01
 2018-07,Groceries,-1000.00
 2018-07,Public Transportation,-105.00
 2018-06,Groceries,-2300.00
