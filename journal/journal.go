@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -61,6 +62,16 @@ type Writes struct {
 func (c *Config) load() error {
 	if len(c.Database) == 0 {
 		return fmt.Errorf("invalid path to database: %q", c.Database)
+	}
+	if c.Database[0] == '~' {
+		if len(c.Database) > 1 && c.Database[1] != '/' {
+			return fmt.Errorf("invalid database path: %q", c.Database)
+		}
+		user, err := user.Current()
+		if err != nil {
+			return err
+		}
+		c.Database = filepath.Join(user.HomeDir, c.Database[1:])
 	}
 	for _, a := range c.Accounts {
 		if len(a.Number) == 0 {
