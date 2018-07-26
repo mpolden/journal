@@ -134,6 +134,28 @@ func (g *Group) IsBalanced() bool {
 	return balance <= slack
 }
 
+// Max returns the highest sum of the groups in gs.
+func Max(gs []Group) int64 {
+	var max int64
+	for _, rg := range gs {
+		if sum := rg.Sum(); sum > max {
+			max = sum
+		}
+	}
+	return max
+}
+
+// Min returns the lowest sum of the groups in gs.
+func Min(gs []Group) int64 {
+	min := Max(gs)
+	for _, rg := range gs {
+		if sum := rg.Sum(); sum < min {
+			min = sum
+		}
+	}
+	return min
+}
+
 // AssortFunc uses groupFn to assort records into groups.
 func AssortFunc(records []Record, assortFn func(Record) *Group) []Group {
 	m := make(map[string]Group)

@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mpolden/journal/journal"
@@ -16,7 +17,14 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-const timeLayout = "2006-01-02"
+const (
+	timeLayout = "2006-01-02"
+	darkGray   = "\033[1;30m"
+	lightRed   = "\033[1;31m"
+	lightGreen = "\033[1;32m"
+	reverse    = "\033[7m"
+	reset      = "\033[0m"
+)
 
 // Options represents command line options that are shared across sub-commands.
 type Options struct {
@@ -195,23 +203,30 @@ func (l *List) sort(rgs []record.Group) error {
 
 func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
-	headers := []string{"Group", "Records", "Sum", "Budget", "Slack", "Balance"}
+	headers := []string{"Group", "Records", "Sum", "Budget", "Slack", "Balance", "Balance bar"}
 	table.SetHeader(headers)
+	table.SetAutoWrapText(false)
 	alignments := make([]int, len(headers))
-	// Align all columns, except the first, to the right
-	for i := 1; i < len(alignments); i++ {
+	// Align all columns, except the first and last, to the right
+	for i := 1; i < len(alignments)-1; i++ {
 		alignments[i] = tablewriter.ALIGN_RIGHT
 	}
 	table.SetColumnAlignment(alignments)
+	var (
+		min = record.Min(rgs)
+		max = record.Max(rgs)
+	)
 	for _, rg := range rgs {
-		c, d := l.balanceColor(rg)
+		c, d := balanceColor(rg, l.colorize())
+		balance := rg.Balance()
 		row := []string{
 			rg.Name,
 			strconv.Itoa(len(rg.Records)),
 			fmtAmount(rg.Sum()),
 			fmtAmount(rg.Budget()),
 			fmtAmount(rg.Slack()),
-			c + fmtAmount(rg.Balance()) + d,
+			c + fmtAmount(balance) + d,
+			balanceBar(balance, min, max, l.colorize()),
 		}
 		table.Append(row)
 	}
@@ -228,16 +243,52 @@ func (l *List) colorize() bool {
 	return !l.Options.IsPipe
 }
 
-func (l *List) balanceColor(rg record.Group) (string, string) {
-	if !l.colorize() {
+func balanceBar(balance, min, max int64, color bool) string {
+	var (
+		bars    int64 = 30
+		barSize       = (max - min) / bars
+	)
+	var n int64
+	if barSize > 0 {
+		n = balance / barSize
+	}
+	sb := strings.Builder{}
+	fill := " "
+	symbol := func(s string, cs ...string) {
+		if color {
+			for _, c := range cs {
+				sb.WriteString(c)
+			}
+		} else {
+			fill = s
+		}
+	}
+	for i, r := -bars/2, false; i < bars/2; i++ {
+		if i < 0 && !r && i >= n {
+			symbol("-", reverse, lightGreen)
+			r = true
+		} else if i > 0 && n > 0 {
+			if !r && i <= n {
+				symbol("+", reverse, lightRed)
+				r = true
+			} else if r && i > n {
+				symbol(" ", reset)
+				r = false
+			}
+		}
+		sb.WriteString(fill)
+		if i == 0 {
+			symbol(" ", reset)
+			r = false
+		}
+	}
+	return sb.String()
+}
+
+func balanceColor(rg record.Group, color bool) (string, string) {
+	if !color {
 		return "", ""
 	}
-	const (
-		darkGray   = "\033[1;30m"
-		lightRed   = "\033[1;31m"
-		lightGreen = "\033[1;32m"
-		reset      = "\033[0m"
-	)
 	if rg.IsBalanced() {
 		return darkGray, reset
 	} else if rg.Balance() < 0 {

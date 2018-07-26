@@ -135,14 +135,13 @@ func TestList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := `+------------+---------+---------+--------+-------+----------+
-|   GROUP    | RECORDS |   SUM   | BUDGET | SLACK | BALANCE  |
-+------------+---------+---------+--------+-------+----------+
-| Everything |       3 | 1337.00 |   0.00 |  0.00 | -1337.00 |
-+------------+---------+---------+--------+-------+----------+
+	want := `+------------+---------+---------+--------+-------+----------+--------------------------------+
+|   GROUP    | RECORDS |   SUM   | BUDGET | SLACK | BALANCE  |          BALANCE BAR           |
++------------+---------+---------+--------+-------+----------+--------------------------------+
+| Everything |       3 | 1337.00 |   0.00 |  0.00 | -1337.00 |                                |
++------------+---------+---------+--------+-------+----------+--------------------------------+
 `
 	if got := stdout.String(); want != got {
-		fmt.Println(got)
 		t.Errorf("want %q, got %q", want, got)
 	}
 
@@ -163,5 +162,27 @@ func TestList(t *testing.T) {
 `
 	if got := stdout.String(); want != got {
 		t.Errorf("want %q, got %q", want, got)
+	}
+}
+
+func TestBalanceBar(t *testing.T) {
+	var tests = []struct {
+		balance int64
+		min     int64
+		max     int64
+		color   bool
+		out     string
+	}{
+		{4000, 0, 10000, true, "                \x1b[0m\x1b[7m\x1b[1;31m            \x1b[0m  "},
+		{-5000, -10000, 10000, true, "        \x1b[7m\x1b[1;32m        \x1b[0m              "},
+		{0, 0, 1000, true, "                \x1b[0m              "},
+		{4000, 0, 10000, false, "                ++++++++++++  "},
+		{-5000, -10000, 10000, false, "        --------              "},
+		{0, 0, 1000, false, "                              "},
+	}
+	for i, tt := range tests {
+		if got := balanceBar(tt.balance, tt.min, tt.max, tt.color); got != tt.out {
+			t.Errorf("#%d: want '%q', got '%q'", i, tt.out, got)
+		}
 	}
 }
