@@ -134,23 +134,23 @@ func (g *Group) IsBalanced() bool {
 	return balance <= slack
 }
 
-// Max returns the highest sum of the groups in gs.
-func Max(gs []Group) int64 {
+// MaxBalance returns the highest balance of the groups in gs.
+func MaxBalance(gs []Group) int64 {
 	var max int64
 	for _, rg := range gs {
-		if sum := rg.Sum(); sum > max {
-			max = sum
+		if b := rg.Balance(); b > max {
+			max = b
 		}
 	}
 	return max
 }
 
-// Min returns the lowest sum of the groups in gs.
-func Min(gs []Group) int64 {
-	min := Max(gs)
+// MinBalance returns the lowest balance of the groups in gs.
+func MinBalance(gs []Group) int64 {
+	min := MaxBalance(gs)
 	for _, rg := range gs {
-		if sum := rg.Sum(); sum < min {
-			min = sum
+		if b := rg.Balance(); b < min {
+			min = b
 		}
 	}
 	return min

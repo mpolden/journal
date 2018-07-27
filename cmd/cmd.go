@@ -213,8 +213,8 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	}
 	table.SetColumnAlignment(alignments)
 	var (
-		min = record.Min(rgs)
-		max = record.Max(rgs)
+		min = record.MinBalance(rgs)
+		max = record.MaxBalance(rgs)
 	)
 	for _, rg := range rgs {
 		c, d := balanceColor(rg, l.colorize())

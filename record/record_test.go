@@ -274,3 +274,39 @@ func TestGroupMath(t *testing.T) {
 		}
 	}
 }
+
+func TestMaxBalance(t *testing.T) {
+	var tests = []struct {
+		gs  []Group
+		max int64
+	}{
+		{[]Group{
+			{Records: []Record{{Amount: -5000}, {Amount: -1000}}},
+			{Records: []Record{{Amount: -5000}, {Amount: -3000}}},
+			{Records: []Record{{Amount: -5000}, {Amount: -2000}}},
+		}, 8000},
+	}
+	for i, tt := range tests {
+		if got, want := MaxBalance(tt.gs), tt.max; got != want {
+			t.Errorf("#%d: want %d, got %d", i, want, got)
+		}
+	}
+}
+
+func TestMinBalance(t *testing.T) {
+	var tests = []struct {
+		gs  []Group
+		min int64
+	}{
+		{[]Group{
+			{Records: []Record{{Amount: 5000}, {Amount: 1000}}},
+			{Records: []Record{{Amount: 5000}, {Amount: 3000}}},
+			{Records: []Record{{Amount: 5000}, {Amount: 2000}}},
+		}, -8000},
+	}
+	for i, tt := range tests {
+		if got, want := MinBalance(tt.gs), tt.min; got != want {
+			t.Errorf("#%d: want %d, got %d", i, want, got)
+		}
+	}
+}
