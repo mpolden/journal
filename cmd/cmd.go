@@ -26,6 +26,8 @@ const (
 	reset      = "\033[0m"
 )
 
+var ansiTrim = strings.NewReplacer(darkGray, "", lightRed, "", lightGreen, "", reverse, "", reset, "")
+
 // Options represents command line options that are shared across sub-commands.
 type Options struct {
 	Config string `short:"f" long:"config" description:"Config file" value-name:"FILE" default:"~/.journalrc"`
@@ -203,7 +205,9 @@ func (l *List) sort(rgs []record.Group) error {
 
 func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
+	var rows [][]string
 	headers := []string{"Group", "Records", "Sum", "Budget", "Slack", "Balance", "Balance bar"}
+	rows = append(rows, headers)
 	table.SetHeader(headers)
 	table.SetAutoWrapText(false)
 	alignments := make([]int, len(headers))
@@ -213,24 +217,71 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	}
 	table.SetColumnAlignment(alignments)
 	var (
-		min = record.MinBalance(rgs)
-		max = record.MaxBalance(rgs)
+		min          = record.MinBalance(rgs)
+		max          = record.MaxBalance(rgs)
+		totalRecords = 0
+		totalBalance int64
+		totalSum     int64
+		totalBudget  int64
+		totalSlack   int64
 	)
 	for _, rg := range rgs {
-		c, d := balanceColor(rg, l.colorize())
-		balance := rg.Balance()
+		var (
+			records = len(rg.Records)
+			balance = rg.Balance()
+			sum     = rg.Sum()
+			budget  = rg.Budget()
+			slack   = rg.Slack()
+			c, d    = balanceColor(balance, rg.IsBalanced(), l.colorize())
+		)
+		totalRecords += records
+		totalBalance += balance
+		totalSum += sum
+		totalBudget += budget
+		totalSlack += slack
 		row := []string{
 			rg.Name,
-			strconv.Itoa(len(rg.Records)),
-			fmtAmount(rg.Sum()),
-			fmtAmount(rg.Budget()),
-			fmtAmount(rg.Slack()),
+			strconv.Itoa(records),
+			fmtAmount(sum),
+			fmtAmount(budget),
+			fmtAmount(slack),
 			c + fmtAmount(balance) + d,
 			balanceBar(balance, min, max, l.colorize()),
 		}
+		rows = append(rows, row)
 		table.Append(row)
 	}
+
+	footer := tablewriter.NewWriter(l.Writer)
+	c, d := balanceColor(totalBalance, totalBalance == 0, l.colorize())
+	footer.SetColumnAlignment(alignments)
+	footer.SetAutoWrapText(false)
+	footer.SetBorders(tablewriter.Border{Left: true, Right: true, Bottom: true})
+	for column := range headers {
+		footer.SetColMinWidth(column, maxLen(column, rows))
+	}
+	footer.Append([]string{
+		"Total",
+		strconv.Itoa(totalRecords),
+		fmtAmount(totalSum),
+		fmtAmount(totalBudget),
+		fmtAmount(totalSlack),
+		c + fmtAmount(totalBalance) + d,
+		balanceBar(totalBalance, min, max, l.colorize()),
+	})
+
 	table.Render()
+	footer.Render()
+}
+
+func maxLen(column int, rows [][]string) int {
+	max := 0
+	for _, row := range rows {
+		if l := len(ansiTrim.Replace(row[column])); l > max {
+			max = l
+		}
+	}
+	return max
 }
 
 func (l *List) colorize() bool {
@@ -285,13 +336,13 @@ func balanceBar(balance, min, max int64, color bool) string {
 	return sb.String()
 }
 
-func balanceColor(rg record.Group, color bool) (string, string) {
+func balanceColor(balance int64, isBalanced, color bool) (string, string) {
 	if !color {
 		return "", ""
 	}
-	if rg.IsBalanced() {
+	if isBalanced {
 		return darkGray, reset
-	} else if rg.Balance() < 0 {
+	} else if balance < 0 {
 		return lightGreen, reset
 	}
 	return lightRed, reset
