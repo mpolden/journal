@@ -51,13 +51,25 @@ name = "Example Bank"
 
 [[groups]]
 name = "Public Transportation"
-budget = -5000
+budgets = [
+  -5000, # January
+  -5000, # February
+  -5000, # March
+  -5000, # April
+  -5000, # May
+  -5000, # June
+  0,     # July
+  0,     # August
+  -5000, # September
+  -5000, # October
+  -5000, # November
+  -5000, # December
+]
 patterns = ["(?i)^Atb"]
 
 [[groups]]
 name = "Groceries"
 budget = -100000
-slack = 10000
 patterns = ["(?i)^Rema"]
 
 [[groups]]
@@ -107,8 +119,9 @@ total budget displayed will be `2 * -50000 = -100000`.
 Note that the budget is specified as one-hundredth of the currency. `budget =
 -50000` means a budget of *-500.00 NOK* .
 
-A fixed value budget slack may be set with `slack`. This is currently only used
-for colourisation of output where the balance differs from the slack.
+It's also possible to set a per-month budget using the `budgets` key. The value
+of `budgets` has to be an array of 12 numbers, one per month. If `budgets` is
+unset, the value of `budget` will be used for all months.
 
 Unwanted records may pollute the journal (e.g. inter-account transfers), these
 records can be ignored entirely by setting `discard = true` on the matching
@@ -170,13 +183,15 @@ Now that we have imported records, they can be listed with `journal ls`:
 
 ```
 $ journal ls
-journal: displaying records between 2018-07-01 and 2018-07-25
-+-----------------------+---------+----------+----------+--------+---------+
-|         GROUP         | RECORDS |   SUM    |  BUDGET  | SLACK  | BALANCE |
-+-----------------------+---------+----------+----------+--------+---------+
-| Groceries             |       2 | -1000.00 | -1000.00 | 100.00 |    0.00 |
-| Public Transportation |       3 |  -105.00 |   -50.00 |   0.00 |   55.00 |
-+-----------------------+---------+----------+----------+--------+---------+
+journal: displaying records between 2018-07-01 and 2018-07-28
++-----------------------+---------+----------+----------+---------+--------------------------------+
+|         GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE |          BALANCE BAR           |
++-----------------------+---------+----------+----------+---------+--------------------------------+
+| Groceries             |       2 | -1000.00 | -1000.00 |    0.00 |                                |
+| Public Transportation |       3 |  -105.00 |   -50.00 |   55.00 |                 ++++++++++++++ |
++-----------------------+---------+----------+----------+---------+--------------------------------+
+| Total                 |       5 | -1105.00 | -1050.00 |   55.00 |                 ++++++++++++++ |
++-----------------------+---------+----------+----------+---------+--------------------------------+
 ```
 
 By default, only records within the current month are listed and sorted
@@ -187,7 +202,7 @@ understand a record grouping, we can list individual records and their group:
 
 ```
 $ journal ls --explain
-journal: displaying records between 2018-07-01 and 2018-07-25
+journal: displaying records between 2018-07-01 and 2018-07-28
 +-----------------------+---------------+--------------+------------+------------+-----------+---------+
 |         GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    | AMOUNT  |
 +-----------------------+---------------+--------------+------------+------------+-----------+---------+
@@ -205,12 +220,14 @@ If we want show older records, date ranges can be specified using `--since` and
 ```
 $ journal ls --since=2018-06-01 --until=2018-06-30
 journal: displaying records between 2018-06-01 and 2018-06-30
-+-----------------------+---------+----------+----------+--------+---------+
-|         GROUP         | RECORDS |   SUM    |  BUDGET  | SLACK  | BALANCE |
-+-----------------------+---------+----------+----------+--------+---------+
-| Groceries             |       3 | -2300.00 | -1000.00 | 100.00 | 1300.00 |
-| Public Transportation |       2 |   -70.00 |   -50.00 |   0.00 |   20.00 |
-+-----------------------+---------+----------+----------+--------+---------+
++-----------------------+---------+----------+----------+---------+--------------------------------+
+|         GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE |          BALANCE BAR           |
++-----------------------+---------+----------+----------+---------+--------------------------------+
+| Groceries             |       3 | -2300.00 | -1000.00 | 1300.00 |                 ++++++++++++++ |
+| Public Transportation |       2 |   -70.00 |   -50.00 |   20.00 |                                |
++-----------------------+---------+----------+----------+---------+--------------------------------+
+| Total                 |       5 | -2370.00 | -1050.00 | 1320.00 |                 ++++++++++++++ |
++-----------------------+---------+----------+----------+---------+--------------------------------+
 ```
 
 Note that the slack and budget has been automatically adjusted to the number of
@@ -219,7 +236,7 @@ months that contain records.
 Options also be combined:
 ```
 $ journal ls --since=2018-01-01 --explain
-journal: displaying records between 2018-01-01 and 2018-07-25
+journal: displaying records between 2018-01-01 and 2018-07-28
 +-----------------------+---------------+--------------+------------+------------+-----------+----------+
 |         GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    |  AMOUNT  |
 +-----------------------+---------------+--------------+------------+------------+-----------+----------+

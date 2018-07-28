@@ -164,7 +164,7 @@ func TestGroupMath(t *testing.T) {
 		balanced bool
 	}{
 		{Group{ // 0: Sum and balance
-			MonthlyBudget: 500,
+			budget: Budget{Months: [12]int64{500}},
 			Records: []Record{
 				{Amount: 50},
 				{Amount: 200},
@@ -176,7 +176,7 @@ func TestGroupMath(t *testing.T) {
 			-750,   // balance
 			false}, // balanced
 		{Group{ // 1: Budget is multiplied by months in time range
-			MonthlyBudget: -500,
+			budget: Budget{Months: [12]int64{-500, -500, -500}},
 			Records: []Record{
 				{Time: date(2017, 1, 1), Amount: -500},
 				{Time: date(2017, 3, 1), Amount: -100},
@@ -187,7 +187,7 @@ func TestGroupMath(t *testing.T) {
 			-400,     // balance
 			false},   // balanced
 		{Group{ // 2: Zero balance is considered balanced
-			MonthlyBudget: 500,
+			budget: Budget{Months: [12]int64{500}},
 			Records: []Record{
 				{Amount: 250},
 				{Amount: 250},
@@ -197,66 +197,17 @@ func TestGroupMath(t *testing.T) {
 			500,   // budget
 			0,     // balance
 			true}, // balanced
-		{Group{ // 3: Positive balance is balanced by positive slack
-			MonthlyBudget: -500,
-			MonthlySlack:  50,
+		{Group{ // 3: Defaults to default budget
+			budget: Budget{Default: 1000},
 			Records: []Record{
-				{Amount: -500},
-				{Amount: -50},
+				{Amount: 250},
+				{Amount: 250},
 			},
 		},
-			-550,  // sum
-			-500,  // budget
-			50,    // balance
-			true}, // balanced
-		{Group{ // 4: Positive balance is not balanced by negative slack
-			MonthlyBudget: -500,
-			MonthlySlack:  -50,
-			Records: []Record{
-				{Amount: -500},
-				{Amount: -50},
-			},
-		},
-			-550,   // sum
-			-500,   // budget
-			50,     // balance
+			500,    // sum
+			1000,   // budget
+			500,    // balance
 			false}, // balanced
-		{Group{ // 5: Negative balance is balanced by exceeding negative slack
-			MonthlyBudget: 500,
-			MonthlySlack:  -60,
-			Records: []Record{
-				{Amount: 500},
-				{Amount: 50},
-			},
-		},
-			550,   // sum
-			500,   // budget
-			-50,   // balance
-			true}, // balanced
-		{Group{ // 6: Negative balance is not balanced by positive slack
-			MonthlyBudget: 500,
-			MonthlySlack:  50,
-			Records: []Record{
-				{Amount: 500},
-				{Amount: 50},
-			},
-		},
-			550,    // sum
-			500,    // budget
-			-50,    // balance
-			false}, // balanced
-		{Group{ // 7: Slack does not affect zero balance
-			MonthlyBudget: -560,
-			MonthlySlack:  -50,
-			Records: []Record{
-				{Amount: -500},
-				{Amount: -60},
-			},
-		},
-			-560,  // sum
-			-560,  // budget
-			0,     // balance
-			true}, // balanced
 
 	}
 	for i, tt := range tests {

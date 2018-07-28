@@ -28,7 +28,7 @@ type Group struct {
 	Name     string
 	Account  string
 	Budget   int64
-	Slack    int64
+	Budgets  [12]int64
 	Patterns []string
 	patterns []*regexp.Regexp
 	IDs      []string
@@ -242,11 +242,11 @@ func (j *Journal) findGroup(r record.Record) *record.Group {
 				if g.Discard {
 					return nil
 				}
-				return &record.Group{
-					Name:          g.Name,
-					MonthlyBudget: g.Budget,
-					MonthlySlack:  g.Slack,
-				}
+				rg := record.NewGroup(g.Name, record.Budget{
+					Default: g.Budget,
+					Months:  g.Budgets,
+				})
+				return &rg
 			}
 		}
 	}
@@ -259,11 +259,11 @@ func (j *Journal) findGroup(r record.Record) *record.Group {
 				if g.Discard {
 					return nil
 				}
-				return &record.Group{
-					Name:          g.Name,
-					MonthlyBudget: g.Budget,
-					MonthlySlack:  g.Slack,
-				}
+				rg := record.NewGroup(g.Name, record.Budget{
+					Default: g.Budget,
+					Months:  g.Budgets,
+				})
+				return &rg
 			}
 		}
 	}

@@ -206,7 +206,7 @@ func (l *List) sort(rgs []record.Group) error {
 func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
 	var rows [][]string
-	headers := []string{"Group", "Records", "Sum", "Budget", "Slack", "Balance", "Balance bar"}
+	headers := []string{"Group", "Records", "Sum", "Budget", "Balance", "Balance bar"}
 	rows = append(rows, headers)
 	table.SetHeader(headers)
 	table.SetAutoWrapText(false)
@@ -221,7 +221,6 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 		totalBalance int64
 		totalSum     int64
 		totalBudget  int64
-		totalSlack   int64
 	)
 	s := sgr{
 		min:     record.MinBalance(rgs),
@@ -234,20 +233,17 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 			balance = rg.Balance()
 			sum     = rg.Sum()
 			budget  = rg.Budget()
-			slack   = rg.Slack()
 			c, d    = s.color(balance, rg.IsBalanced())
 		)
 		totalRecords += records
 		totalBalance += balance
 		totalSum += sum
 		totalBudget += budget
-		totalSlack += slack
 		row := []string{
 			rg.Name,
 			strconv.Itoa(records),
 			fmtAmount(sum),
 			fmtAmount(budget),
-			fmtAmount(slack),
 			c + fmtAmount(balance) + d,
 			s.bar(balance),
 		}
@@ -256,7 +252,7 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	}
 
 	footer := tablewriter.NewWriter(l.Writer)
-	c, d := s.color(totalBalance, record.IsBalanced(totalBalance, totalSlack))
+	c, d := s.color(totalBalance, record.IsBalanced(totalBalance))
 	footer.SetColumnAlignment(alignments)
 	footer.SetAutoWrapText(false)
 	footer.SetBorders(tablewriter.Border{Left: true, Right: true, Bottom: true})
@@ -268,7 +264,6 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 		strconv.Itoa(totalRecords),
 		fmtAmount(totalSum),
 		fmtAmount(totalBudget),
-		fmtAmount(totalSlack),
 		c + fmtAmount(totalBalance) + d,
 		s.bar(totalBalance),
 	})

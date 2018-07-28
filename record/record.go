@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mpolden/journal/timeutil"
 	"github.com/pkg/errors"
 )
 
@@ -25,6 +24,12 @@ const (
 // Reader is the interface for record readers.
 type Reader interface {
 	Read() ([]Record, error)
+}
+
+// A Budget represents a budget for a group of records.
+type Budget struct {
+	Default int64
+	Months  [12]int64
 }
 
 // An Account identifies a finanical account.
@@ -43,10 +48,9 @@ type Record struct {
 
 // A Group is a list of recordes grouped together under a common name.
 type Group struct {
-	Name          string
-	Records       []Record
-	MonthlyBudget int64
-	MonthlySlack  int64
+	Name    string
+	Records []Record
+	budget  Budget
 }
 
 // A Period stores record groups for specific moment in time.
@@ -67,12 +71,29 @@ func max(x, y int64) int64 {
 	return y
 }
 
+// NewGroup returns a new group with name and budget.
+func NewGroup(name string, budget Budget) Group { return Group{Name: name, budget: budget} }
+
 // NewReader returns a new reader for CSV-encoded records.
 func NewReader(rd io.Reader) Reader {
 	return &reader{
 		rd:       rd,
 		replacer: strings.NewReplacer(decimalSeparator, "", thousandSeparator, ""),
 	}
+}
+
+// Month returns the budget for month.
+func (b *Budget) Month(m time.Month) int64 {
+	monthly := false
+	for _, n := range b.Months {
+		if n != 0 {
+			monthly = true
+		}
+	}
+	if monthly {
+		return b.Months[m-1]
+	}
+	return b.Default
 }
 
 // ID returns a shortened SHA-1 hash of the fields in this record.
@@ -86,17 +107,17 @@ func (r *Record) ID() string {
 	return fmt.Sprintf("%x", sum)[:10]
 }
 
-func (g *Group) monthCount() int64 {
-	var start, end time.Time
+func (g *Group) months() []time.Month {
+	var months []time.Month
+	var month time.Month
 	for _, r := range g.Records {
-		if start.IsZero() || r.Time.Before(start) {
-			start = r.Time
-		}
-		if r.Time.After(end) {
-			end = r.Time
+		next := r.Time.Month()
+		if next != month {
+			months = append(months, next)
+			month = next
 		}
 	}
-	return max(1, timeutil.CountMonths(start, end))
+	return months
 }
 
 // Sum returns the total sum of all records in the group.
@@ -109,31 +130,23 @@ func (g *Group) Sum() int64 {
 }
 
 // Budget returns the budget for this group. The budget is adjusted to the record time range.
-func (g *Group) Budget() int64 { return g.MonthlyBudget * g.monthCount() }
-
-// Slack returns the slack for this group. The slack is adjusted to the record time range.
-func (g *Group) Slack() int64 { return g.MonthlySlack * g.monthCount() }
+func (g *Group) Budget() int64 {
+	var budget int64
+	for _, m := range g.months() {
+		budget += g.budget.Month(m)
+	}
+	return budget
+}
 
 // Balance returns the difference between the budget of this group and its sum. The balance is adjusted to the record
 // time range.
 func (g *Group) Balance() int64 { return g.Budget() - g.Sum() }
 
 // IsBalanced returns true if this group is balanced according to its budget and slack.
-func (g *Group) IsBalanced() bool { return IsBalanced(g.Balance(), g.Slack()) }
+func (g *Group) IsBalanced() bool { return IsBalanced(g.Balance()) }
 
 // IsBalanced returns true if balance is between 0 and slack.
-func IsBalanced(balance, slack int64) bool {
-	if balance == 0 {
-		return true
-	}
-	if slack == 0 {
-		return balance == 0
-	}
-	if balance < 0 {
-		return balance >= slack
-	}
-	return balance <= slack
-}
+func IsBalanced(balance int64) bool { return balance == 0 }
 
 // MaxBalance returns the highest balance of the groups in gs.
 func MaxBalance(gs []Group) int64 {
