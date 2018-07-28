@@ -166,29 +166,3 @@ func TestList(t *testing.T) {
 		t.Errorf("want %q, got %q", want, got)
 	}
 }
-
-func TestBalanceBar(t *testing.T) {
-	var tests = []struct {
-		balance int64
-		min     int64
-		max     int64
-		color   bool
-		out     string
-	}{
-		{4000, 0, 10000, true, "                \x1b[7m\x1b[1;31m            \x1b[0m  "},
-		// Balance is out of bounds
-		{10000, 0, 5000, true, "                \x1b[7m\x1b[1;31m              \x1b[0m"},
-		{-5000, -10000, 10000, true, "        \x1b[7m\x1b[1;32m        \x1b[0m              "},
-		// Max > min
-		{-2000, -5000, -10000, true, "                              "},
-		{0, 0, 1000, true, "                              "},
-		{4000, 0, 10000, false, "                ++++++++++++  "},
-		{-5000, -10000, 10000, false, "        --------              "},
-		{0, 0, 1000, false, "                              "},
-	}
-	for i, tt := range tests {
-		if got := balanceBar(tt.balance, tt.min, tt.max, tt.color); got != tt.out {
-			t.Errorf("#%d: want '%q', got '%q'", i, tt.out, got)
-		}
-	}
-}

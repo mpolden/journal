@@ -7,7 +7,6 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/mpolden/journal/journal"
@@ -17,16 +16,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-const (
-	timeLayout = "2006-01-02"
-	darkGray   = "\033[1;30m"
-	lightRed   = "\033[1;31m"
-	lightGreen = "\033[1;32m"
-	reverse    = "\033[7m"
-	reset      = "\033[0m"
-)
-
-var ansiTrim = strings.NewReplacer(darkGray, "", lightRed, "", lightGreen, "", reverse, "", reset, "")
+const timeLayout = "2006-01-02"
 
 // Options represents command line options that are shared across sub-commands.
 type Options struct {
@@ -72,6 +62,42 @@ type List struct {
 // NewLogger creates a new preconfigured logger.
 func NewLogger(w io.Writer) *log.Logger { return log.New(w, "journal: ", 0) }
 
+func maxLen(column int, rows [][]string) int {
+	max := 0
+	for _, row := range rows {
+		if l := len(sgrTrim.Replace(row[column])); l > max {
+			max = l
+		}
+	}
+	return max
+}
+
+func parseTime(s string) (time.Time, error) {
+	if s == "" {
+		return time.Time{}, nil
+	}
+	return time.Parse(timeLayout, s)
+}
+
+func timeRange(since, until string) (time.Time, time.Time, error) {
+	now := time.Now()
+	s, err := parseTime(since)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	u, err := parseTime(until)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	if s.IsZero() { // Default to start of month
+		s = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	}
+	if u.IsZero() {
+		u = now
+	}
+	return s, u, nil
+}
+
 // Execute imports records into the journal from a file.
 func (i *Import) Execute(args []string) error {
 	f, err := os.Open(i.Args.File)
@@ -116,32 +142,6 @@ func (i *Import) readerFrom(r io.Reader) (record.Reader, error) {
 		return nil, fmt.Errorf("invalid reader: %q", i.Reader)
 	}
 	return rr, nil
-}
-
-func parseTime(s string) (time.Time, error) {
-	if s == "" {
-		return time.Time{}, nil
-	}
-	return time.Parse(timeLayout, s)
-}
-
-func timeRange(since, until string) (time.Time, time.Time, error) {
-	now := time.Now()
-	s, err := parseTime(since)
-	if err != nil {
-		return time.Time{}, time.Time{}, err
-	}
-	u, err := parseTime(until)
-	if err != nil {
-		return time.Time{}, time.Time{}, err
-	}
-	if s.IsZero() { // Default to start of month
-		s = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	}
-	if u.IsZero() {
-		u = now
-	}
-	return s, u, nil
 }
 
 // Execute lists records contained in the journal.
@@ -217,14 +217,17 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	}
 	table.SetColumnAlignment(alignments)
 	var (
-		min          = record.MinBalance(rgs)
-		max          = record.MaxBalance(rgs)
 		totalRecords = 0
 		totalBalance int64
 		totalSum     int64
 		totalBudget  int64
 		totalSlack   int64
 	)
+	s := sgr{
+		min:     record.MinBalance(rgs),
+		max:     record.MaxBalance(rgs),
+		enabled: l.colorize(),
+	}
 	for _, rg := range rgs {
 		var (
 			records = len(rg.Records)
@@ -232,7 +235,7 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 			sum     = rg.Sum()
 			budget  = rg.Budget()
 			slack   = rg.Slack()
-			c, d    = balanceColor(balance, rg.IsBalanced(), l.colorize())
+			c, d    = s.color(balance, rg.IsBalanced())
 		)
 		totalRecords += records
 		totalBalance += balance
@@ -246,14 +249,14 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 			fmtAmount(budget),
 			fmtAmount(slack),
 			c + fmtAmount(balance) + d,
-			balanceBar(balance, min, max, l.colorize()),
+			s.bar(balance),
 		}
 		rows = append(rows, row)
 		table.Append(row)
 	}
 
 	footer := tablewriter.NewWriter(l.Writer)
-	c, d := balanceColor(totalBalance, totalBalance == 0, l.colorize())
+	c, d := s.color(totalBalance, record.IsBalanced(totalBalance, totalSlack))
 	footer.SetColumnAlignment(alignments)
 	footer.SetAutoWrapText(false)
 	footer.SetBorders(tablewriter.Border{Left: true, Right: true, Bottom: true})
@@ -267,21 +270,11 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 		fmtAmount(totalBudget),
 		fmtAmount(totalSlack),
 		c + fmtAmount(totalBalance) + d,
-		balanceBar(totalBalance, min, max, l.colorize()),
+		s.bar(totalBalance),
 	})
 
 	table.Render()
 	footer.Render()
-}
-
-func maxLen(column int, rows [][]string) int {
-	max := 0
-	for _, row := range rows {
-		if l := len(ansiTrim.Replace(row[column])); l > max {
-			max = l
-		}
-	}
-	return max
 }
 
 func (l *List) colorize() bool {
@@ -292,60 +285,6 @@ func (l *List) colorize() bool {
 		return false
 	}
 	return !l.Options.IsPipe
-}
-
-func balanceBar(balance, min, max int64, color bool) string {
-	var (
-		bars    int64 = 30
-		barSize       = (max - min) / bars
-	)
-	var n int64
-	if barSize > 0 {
-		n = balance / barSize
-	}
-	sb := strings.Builder{}
-	fill := ' '
-	symbol := func(s rune, cs ...string) {
-		if color {
-			for _, c := range cs {
-				sb.WriteString(c)
-			}
-		} else {
-			fill = s
-		}
-	}
-	for i, j, r := -bars/2, bars/2, false; i < j; i++ {
-		if !r && i < 0 && i >= n {
-			symbol('-', reverse, lightGreen)
-			r = true
-		} else if i > 0 {
-			if !r && i <= n {
-				symbol('+', reverse, lightRed)
-				r = true
-			} else if r && i > n {
-				symbol(' ', reset)
-				r = false
-			}
-		}
-		sb.WriteRune(fill)
-		if r && (i == 0 || i == j-1) {
-			symbol(' ', reset)
-			r = false
-		}
-	}
-	return sb.String()
-}
-
-func balanceColor(balance int64, isBalanced, color bool) (string, string) {
-	if !color {
-		return "", ""
-	}
-	if isBalanced {
-		return darkGray, reset
-	} else if balance < 0 {
-		return lightGreen, reset
-	}
-	return lightRed, reset
 }
 
 func (l *List) printAll(rgs []record.Group, fmtAmount func(int64) string) {

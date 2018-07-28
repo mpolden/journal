@@ -119,9 +119,10 @@ func (g *Group) Slack() int64 { return g.MonthlySlack * g.monthCount() }
 func (g *Group) Balance() int64 { return g.Budget() - g.Sum() }
 
 // IsBalanced returns true if this group is balanced according to its budget and slack.
-func (g *Group) IsBalanced() bool {
-	balance := g.Balance()
-	slack := g.Slack()
+func (g *Group) IsBalanced() bool { return IsBalanced(g.Balance(), g.Slack()) }
+
+// IsBalanced returns true if balance is between 0 and slack.
+func IsBalanced(balance, slack int64) bool {
 	if balance == 0 {
 		return true
 	}
