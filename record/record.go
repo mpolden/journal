@@ -64,13 +64,6 @@ type reader struct {
 	replacer *strings.Replacer
 }
 
-func max(x, y int64) int64 {
-	if x > y {
-		return x
-	}
-	return y
-}
-
 // NewGroup returns a new group with name and budget.
 func NewGroup(name string, budget Budget) Group { return Group{Name: name, budget: budget} }
 
@@ -88,6 +81,7 @@ func (b *Budget) Month(m time.Month) int64 {
 	for _, n := range b.Months {
 		if n != 0 {
 			monthly = true
+			break
 		}
 	}
 	if monthly {
