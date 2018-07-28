@@ -253,8 +253,8 @@ func balanceBar(balance, min, max int64, color bool) string {
 		n = balance / barSize
 	}
 	sb := strings.Builder{}
-	fill := " "
-	symbol := func(s string, cs ...string) {
+	fill := ' '
+	symbol := func(s rune, cs ...string) {
 		if color {
 			for _, c := range cs {
 				sb.WriteString(c)
@@ -264,21 +264,21 @@ func balanceBar(balance, min, max int64, color bool) string {
 		}
 	}
 	for i, r := -bars/2, false; i < bars/2; i++ {
-		if i < 0 && !r && i >= n {
-			symbol("-", reverse, lightGreen)
+		if !r && i < 0 && i >= n {
+			symbol('-', reverse, lightGreen)
 			r = true
-		} else if i > 0 && n > 0 {
+		} else if i > 0 {
 			if !r && i <= n {
-				symbol("+", reverse, lightRed)
+				symbol('+', reverse, lightRed)
 				r = true
 			} else if r && i > n {
-				symbol(" ", reset)
+				symbol(' ', reset)
 				r = false
 			}
 		}
-		sb.WriteString(fill)
-		if i == 0 {
-			symbol(" ", reset)
+		sb.WriteRune(fill)
+		if r && i == 0 {
+			symbol(' ', reset)
 			r = false
 		}
 	}
