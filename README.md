@@ -218,20 +218,20 @@ If we want show older records, date ranges can be specified using `--since` and
 `--until`:
 
 ```
-$ journal ls --since=2018-06-01 --until=2018-06-30
-journal: displaying records between 2018-06-01 and 2018-06-30
+$ journal ls --since=2018-06-01 --until=2018-07-31
+journal: displaying records between 2018-06-01 and 2018-07-31
 +-----------------------+---------+----------+----------+---------+--------------------------------+
 |         GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE |          BALANCE BAR           |
 +-----------------------+---------+----------+----------+---------+--------------------------------+
-| Groceries             |       3 | -2300.00 | -1000.00 | 1300.00 |                 ++++++++++++++ |
-| Public Transportation |       2 |   -70.00 |   -50.00 |   20.00 |                                |
+| Groceries             |       5 | -3300.00 | -4000.00 | -700.00 | ----------------               |
+| Public Transportation |       5 |  -175.00 |  -100.00 |   75.00 |                 ++             |
 +-----------------------+---------+----------+----------+---------+--------------------------------+
-| Total                 |       5 | -2370.00 | -1050.00 | 1320.00 |                 ++++++++++++++ |
+| Total                 |      10 | -3475.00 | -4100.00 | -625.00 | ----------------               |
 +-----------------------+---------+----------+----------+---------+--------------------------------+
 ```
 
-Note that the slack and budget has been automatically adjusted to the number of
-months that contain records.
+Note that the budget has been automatically adjusted to the number of months
+that contain records.
 
 Options also be combined:
 ```
