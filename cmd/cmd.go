@@ -263,7 +263,7 @@ func balanceBar(balance, min, max int64, color bool) string {
 			fill = s
 		}
 	}
-	for i, r := -bars/2, false; i < bars/2; i++ {
+	for i, j, r := -bars/2, bars/2, false; i < j; i++ {
 		if !r && i < 0 && i >= n {
 			symbol('-', reverse, lightGreen)
 			r = true
@@ -277,7 +277,7 @@ func balanceBar(balance, min, max int64, color bool) string {
 			}
 		}
 		sb.WriteRune(fill)
-		if r && i == 0 {
+		if r && (i == 0 || i == j-1) {
 			symbol(' ', reset)
 			r = false
 		}

@@ -174,7 +174,10 @@ func TestBalanceBar(t *testing.T) {
 		out     string
 	}{
 		{4000, 0, 10000, true, "                \x1b[7m\x1b[1;31m            \x1b[0m  "},
+		// Balance is out of bounds
+		{10000, 0, 5000, true, "                \x1b[7m\x1b[1;31m              \x1b[0m"},
 		{-5000, -10000, 10000, true, "        \x1b[7m\x1b[1;32m        \x1b[0m              "},
+		// Max > min
 		{-2000, -5000, -10000, true, "                              "},
 		{0, 0, 1000, true, "                              "},
 		{4000, 0, 10000, false, "                ++++++++++++  "},
