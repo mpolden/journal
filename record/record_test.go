@@ -179,12 +179,13 @@ func TestGroupMath(t *testing.T) {
 			budget: Budget{Months: [12]int64{-500, -500, -500}},
 			Records: []Record{
 				{Time: date(2017, 1, 1), Amount: -500},
+				{Time: date(2017, 1, 2), Amount: 100}, // Repeated month does not affect budget
 				{Time: date(2017, 3, 1), Amount: -100},
 			},
 		},
-			-600,     // sum
+			-500,     // sum
 			-500 * 2, // budget
-			-400,     // balance
+			-500,     // balance
 			false},   // balanced
 		{Group{ // 2: Zero balance is considered balanced
 			budget: Budget{Months: [12]int64{500}},

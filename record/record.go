@@ -123,7 +123,8 @@ func (g *Group) Sum() int64 {
 	return sum
 }
 
-// Budget returns the budget for this group. The budget is adjusted to the record time range.
+// Budget returns the budget for this group. The budget is multiplied by the number of distinct months found in the
+// record time range.
 func (g *Group) Budget() int64 {
 	var budget int64
 	for _, m := range g.months() {
@@ -132,14 +133,13 @@ func (g *Group) Budget() int64 {
 	return budget
 }
 
-// Balance returns the difference between the budget of this group and its sum. The balance is adjusted to the record
-// time range.
+// Balance returns the difference between the budget of this group and its sum.
 func (g *Group) Balance() int64 { return g.Budget() - g.Sum() }
 
-// IsBalanced returns true if this group is balanced according to its budget and slack.
+// IsBalanced returns true if this group is balanced according to its budget.
 func (g *Group) IsBalanced() bool { return IsBalanced(g.Balance()) }
 
-// IsBalanced returns true if balance is between 0 and slack.
+// IsBalanced returns true if balance is zero.
 func IsBalanced(balance int64) bool { return balance == 0 }
 
 // MaxBalance returns the highest balance of the groups in gs.
