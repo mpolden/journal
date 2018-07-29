@@ -167,7 +167,11 @@ func (l *List) Execute(args []string) error {
 		return err
 	}
 
-	l.Log.Printf("displaying records between %s and %s", s.Format(timeLayout), u.Format(timeLayout))
+	account := "all accounts"
+	if l.Args.Account != "" {
+		account = "account " + l.Args.Account
+	}
+	l.Log.Printf("displaying records for %s between %s and %s", account, s.Format(timeLayout), u.Format(timeLayout))
 
 	if l.Explain {
 		l.printAll(rgs, j.FormatAmount)
@@ -252,13 +256,13 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	}
 
 	footer := tablewriter.NewWriter(l.Writer)
-	c, d := s.color(totalBalance)
 	footer.SetColumnAlignment(alignments)
 	footer.SetAutoWrapText(false)
 	footer.SetBorders(tablewriter.Border{Left: true, Right: true, Bottom: true})
 	for column := range headers {
 		footer.SetColMinWidth(column, maxLen(column, rows))
 	}
+	c, d := s.color(totalBalance)
 	footer.Append([]string{
 		"Total",
 		strconv.Itoa(totalRecords),
