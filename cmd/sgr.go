@@ -60,11 +60,11 @@ func (s *sgr) bar(n int64) string {
 	return sb.String()
 }
 
-func (s *sgr) color(n int64, neutral bool) (string, string) {
+func (s *sgr) color(n int64) (string, string) {
 	if !s.enabled {
 		return "", ""
 	}
-	if neutral {
+	if n == 0 {
 		return darkGray, reset
 	} else if n < 0 {
 		return lightGreen, reset

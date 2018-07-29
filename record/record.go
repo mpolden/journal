@@ -136,12 +136,6 @@ func (g *Group) Budget() int64 {
 // Balance returns the difference between the budget of this group and its sum.
 func (g *Group) Balance() int64 { return g.Budget() - g.Sum() }
 
-// IsBalanced returns true if this group is balanced according to its budget.
-func (g *Group) IsBalanced() bool { return IsBalanced(g.Balance()) }
-
-// IsBalanced returns true if balance is zero.
-func IsBalanced(balance int64) bool { return balance == 0 }
-
 // MaxBalance returns the highest balance of the groups in gs.
 func MaxBalance(gs []Group) int64 {
 	var max int64

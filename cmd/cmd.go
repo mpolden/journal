@@ -233,7 +233,7 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 			balance = rg.Balance()
 			sum     = rg.Sum()
 			budget  = rg.Budget()
-			c, d    = s.color(balance, rg.IsBalanced())
+			c, d    = s.color(balance)
 		)
 		totalRecords += records
 		totalBalance += balance
@@ -252,7 +252,7 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 	}
 
 	footer := tablewriter.NewWriter(l.Writer)
-	c, d := s.color(totalBalance, record.IsBalanced(totalBalance))
+	c, d := s.color(totalBalance)
 	footer.SetColumnAlignment(alignments)
 	footer.SetAutoWrapText(false)
 	footer.SetBorders(tablewriter.Border{Left: true, Right: true, Bottom: true})

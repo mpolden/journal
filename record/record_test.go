@@ -157,11 +157,10 @@ func TestAssortPeriodFunc(t *testing.T) {
 
 func TestGroupMath(t *testing.T) {
 	var tests = []struct {
-		g        Group
-		sum      int64
-		budget   int64
-		balance  int64
-		balanced bool
+		g       Group
+		sum     int64
+		budget  int64
+		balance int64
 	}{
 		{Group{ // 0: Sum and balance
 			budget: Budget{Months: [12]int64{500}},
@@ -171,10 +170,9 @@ func TestGroupMath(t *testing.T) {
 				{Amount: 1000},
 			},
 		},
-			1250,   // sum
-			500,    // budget
-			-750,   // balance
-			false}, // balanced
+			1250,  // sum
+			500,   // budget
+			-750}, // balance
 		{Group{ // 1: Budget is multiplied by months in time range
 			budget: Budget{Months: [12]int64{-500, -500, -500}},
 			Records: []Record{
@@ -185,8 +183,7 @@ func TestGroupMath(t *testing.T) {
 		},
 			-500,     // sum
 			-500 * 2, // budget
-			-500,     // balance
-			false},   // balanced
+			-500},    // balance
 		{Group{ // 2: Zero balance is considered balanced
 			budget: Budget{Months: [12]int64{500}},
 			Records: []Record{
@@ -194,10 +191,9 @@ func TestGroupMath(t *testing.T) {
 				{Amount: 250},
 			},
 		},
-			500,   // sum
-			500,   // budget
-			0,     // balance
-			true}, // balanced
+			500, // sum
+			500, // budget
+			0},  // balance
 		{Group{ // 3: Defaults to default budget
 			budget: Budget{Default: 1000},
 			Records: []Record{
@@ -205,10 +201,9 @@ func TestGroupMath(t *testing.T) {
 				{Amount: 250},
 			},
 		},
-			500,    // sum
-			1000,   // budget
-			500,    // balance
-			false}, // balanced
+			500,  // sum
+			1000, // budget
+			500}, // balance
 
 	}
 	for i, tt := range tests {
@@ -220,9 +215,6 @@ func TestGroupMath(t *testing.T) {
 		}
 		if want, got := tt.balance, tt.g.Balance(); want != got {
 			t.Errorf("#%d: want Balance = %d, got %d", i, want, got)
-		}
-		if want, got := tt.balanced, tt.g.IsBalanced(); want != got {
-			t.Errorf("#%d: want Balanced = %t, got %t", i, want, got)
 		}
 	}
 }
