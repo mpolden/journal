@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/mpolden/journal/record"
+	"github.com/mpolden/journal/record/komplett"
+	"github.com/mpolden/journal/record/norwegian"
 )
 
 func date(year int, month time.Month, day int) time.Time {
@@ -58,6 +60,49 @@ discard = true
 		t.Fatal(err)
 	}
 	return j
+}
+
+func TestReaderFrom(t *testing.T) {
+	r := strings.NewReader("")
+	var tests = []struct {
+		name     string
+		filename string
+		impl     string
+	}{
+		{"csv", "", "default"},
+		{"norwegian", "", "norwegian"},
+		{"komplett", "", "komplett"},
+		{"komplettsparing", "", "komplett-sparing"},
+		{"auto", "foo.csv", "default"},
+		{"auto", "foo.xlsx", "norwegian"},
+		{"auto", "foo.html", "komplett"},
+		{"auto", "foo.json", "komplett-sparing"},
+	}
+	for i, tt := range tests {
+		rr, err := readerFrom(r, tt.name, tt.filename)
+		if err != nil {
+			t.Fatal(err)
+		}
+		switch tt.impl {
+		case "default":
+			if _, ok := rr.(record.Reader); !ok {
+				t.Errorf("#%d: want record.Reader, got %T", i, rr)
+			}
+		case "norwegian":
+			if _, ok := rr.(*norwegian.Reader); !ok {
+				t.Errorf("#%d: want norwegian.Reader, got %T", i, rr)
+			}
+		case "komplett", "komplett-sparing":
+			kr, ok := rr.(*komplett.Reader)
+			if !ok {
+				t.Errorf("#%d: want komplett.Reader, got %T", i, rr)
+			}
+			want := tt.impl == "komplett-sparing"
+			if kr.JSON != want {
+				t.Errorf("#%d: want JSON = %t, got %t", i, want, kr.JSON)
+			}
+		}
+	}
 }
 
 func TestWrite(t *testing.T) {

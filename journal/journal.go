@@ -14,6 +14,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/mpolden/journal/record"
+	"github.com/mpolden/journal/record/komplett"
+	"github.com/mpolden/journal/record/norwegian"
 	"github.com/mpolden/journal/sql"
 )
 
@@ -103,6 +105,37 @@ func readConfig(r io.Reader) (Config, error) {
 	return conf, err
 }
 
+func readerFrom(r io.Reader, name, filename string) (record.Reader, error) {
+	var rr record.Reader
+	switch name {
+	case "csv":
+		rr = record.NewReader(r)
+	case "komplett", "komplettsparing":
+		kr := komplett.NewReader(r)
+		kr.JSON = name == "komplettsparing"
+		rr = kr
+	case "norwegian":
+		rr = norwegian.NewReader(r)
+	case "auto":
+		ext := filepath.Ext(filename)
+		switch ext {
+		case ".csv":
+			rr = record.NewReader(r)
+		case ".xlsx":
+			rr = norwegian.NewReader(r)
+		case ".html", ".json":
+			kr := komplett.NewReader(r)
+			kr.JSON = ext == ".json"
+			rr = kr
+		default:
+			return nil, fmt.Errorf("failed to guess reader for file name: %s", filename)
+		}
+	default:
+		return nil, fmt.Errorf("invalid reader: %q", name)
+	}
+	return rr, nil
+}
+
 // FromConfig creates a new journal from a configuration file located at name.
 func FromConfig(name string) (*Journal, error) {
 	if name == "~/.journalrc" {
@@ -162,6 +195,16 @@ func (j *Journal) FormatAmount(n int64) string {
 	buf.WriteString(j.Comma)
 	buf.WriteString(fmt.Sprintf("%02d", f))
 	return buf.String()
+}
+
+// ReadFile uses reader to read records from file f. If reader is empty, the reader to use will be guessed from the //
+// file name.
+func (j *Journal) ReadFile(reader string, f *os.File) ([]record.Record, error) {
+	r, err := readerFrom(f, reader, f.Name())
+	if err != nil {
+		return nil, err
+	}
+	return r.Read()
 }
 
 // Export writes periods to writer w using CSV-encoding. The timeLayout defines the format of time fields.

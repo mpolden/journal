@@ -11,8 +11,6 @@ import (
 
 	"github.com/mpolden/journal/journal"
 	"github.com/mpolden/journal/record"
-	"github.com/mpolden/journal/record/komplett"
-	"github.com/mpolden/journal/record/norwegian"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -30,7 +28,7 @@ type Options struct {
 // Import represents options for the import sub-command.
 type Import struct {
 	Options
-	Reader string `short:"r" long:"reader" description:"Name of reader to use when importing data" choice:"csv" choice:"komplett" choice:"komplettsparing" choice:"norwegian" default:"csv"`
+	Reader string `short:"r" long:"reader" description:"Name of reader to use when importing data" choice:"csv" choice:"komplett" choice:"komplettsparing" choice:"norwegian" choice:"auto" default:"auto"`
 	Args   struct {
 		Account string `description:"Account number" positional-arg-name:"account-number"`
 		File    string `description:"File containing records to import" positional-arg-name:"import-file"`
@@ -111,12 +109,7 @@ func (i *Import) Execute(args []string) error {
 		return err
 	}
 
-	r, err := i.readerFrom(f)
-	if err != nil {
-		return err
-	}
-
-	rs, err := r.Read()
+	rs, err := j.ReadFile(i.Reader, f)
 	if err != nil {
 		return err
 	}
@@ -125,23 +118,6 @@ func (i *Import) Execute(args []string) error {
 	i.Log.Printf("created %d new account(s)", writes.Account)
 	i.Log.Printf("imported %d new record(s) out of %d total", writes.Record, len(rs))
 	return err
-}
-
-func (i *Import) readerFrom(r io.Reader) (record.Reader, error) {
-	var rr record.Reader
-	switch i.Reader {
-	case "csv":
-		rr = record.NewReader(r)
-	case "komplett", "komplettsparing":
-		kr := komplett.NewReader(r)
-		kr.JSON = i.Reader == "komplettsparing"
-		rr = kr
-	case "norwegian":
-		rr = norwegian.NewReader(r)
-	default:
-		return nil, fmt.Errorf("invalid reader: %q", i.Reader)
-	}
-	return rr, nil
 }
 
 // Execute lists records contained in the journal.
