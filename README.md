@@ -41,9 +41,9 @@ format and expects to find its configuration file in `~/.journalrc`.
 Example:
 
 ```toml
-Database = "/home/user/journal.db"
-Comma = "."
-DefaultGroup = "*** UNMATCHED ***"
+database = "/home/user/journal.db"
+comma = "."
+defaultGroup = "*** UNMATCHED ***"
 
 [[accounts]]
 number = "1234.56.78900"
@@ -85,13 +85,13 @@ pattern = ["^Spam"]
 discard = true
 ```
 
-`Database` specifies where the SQLite database containing our records should be
+`database` specifies where the SQLite database containing our records should be
 stored.
 
-`Comma` is the decimal separator to use when displaying monetary amounts. It
-defaults to `.`
+`comma` is the decimal separator to use when displaying monetary amounts.
+Defaults to `.`
 
-`DefaultGroup` is the default group name to use for unmatched records. Defaults
+`defaultGroup` is the default group name to use for unmatched records. Defaults
 to `*** UNMATCHED ***`.
 
 `[[accounts]]` declares known bank accounts. The section can be repeated to
@@ -101,27 +101,27 @@ define multiple accounts. Importing records for an unknown account is an error.
 group name and `patterns` sets the list of regular expressions that match record
 texts. The section can be repeated to declare multiple groups.
 
-If any of the patterns in `patterns` match, the group is considered a match.
-Matching follows the order declared in the configuration file, where the first
-matching group wins.
+If any of the patterns in `patterns` match, the group is considered a match for
+a given record. Matching follows the order declared in the configuration file,
+where the first matching group wins.
 
-To avoid having to create patterns for records that may only occur once, it's
-possible to pin records to a group using the record ID. Pinning takes precedence
-over matching patterns. Record IDs can be found with `journal ls --explain`.
+Records can be pinned to a group using the `ids` key. This avoids the need to
+create patterns for records that may only occur once. The `ids` key must be an
+array of IDs to pin. Pinning takes precedence over matching patterns. Record IDs
+can be found with `journal ls --explain`.
 
-A monthly budget can be set per group by with the `budget` key. When listing
-records for multiple months, the budget will be multiplied by the number of
-months in the time range.
+A monthly budget can be set per group by with the `budget` key. The budget is
+specified as one-hundredth of the currency. `budget = -50000` means a budget of
+*-500.00 NOK* .
 
-E.g. with `budget = -50000` and *2018-05-13 - 2018-07-05* as the time range, the
-total budget displayed will be `2 * -50000 = -100000`.
+When listing records for multiple months, the budget will be multiplied by the
+number of months in the record time range. E.g. with `budget = -50000` and
+records occurring in all months between *2018-05-13* and *2018-07-05*, the total
+budget will be `2 * -50000 = -100000`.
 
-Note that the budget is specified as one-hundredth of the currency. `budget =
--50000` means a budget of *-500.00 NOK* .
-
-It's also possible to set a per-month budget using the `budgets` key. The value
-of `budgets` has to be an array of 12 numbers, one per month. If `budgets` is
-unset, the value of `budget` will be used for all months.
+It's also possible to set a custom budget for each month using the `budgets`
+key. The value of `budgets` has to be an array of 12 numbers, one per month. If
+`budgets` is unset, the value of `budget` will be used for all months.
 
 Unwanted records may pollute the journal (e.g. inter-account transfers), these
 records can be ignored entirely by setting `discard = true` on the matching
@@ -183,7 +183,7 @@ Now that we have imported records, they can be listed with `journal ls`:
 
 ```
 $ journal ls
-journal: displaying records between 2018-07-01 and 2018-07-28
+journal: displaying records for all accounts between 2018-07-01 and 2018-07-28
 +-----------------------+---------+----------+----------+---------+--------------------------------+
 |         GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE |          BALANCE BAR           |
 +-----------------------+---------+----------+----------+---------+--------------------------------+
@@ -202,7 +202,7 @@ understand a record grouping, we can list individual records and their group:
 
 ```
 $ journal ls --explain
-journal: displaying records between 2018-07-01 and 2018-07-28
+journal: displaying records for all accounts between 2018-07-01 and 2018-07-28
 +-----------------------+---------------+--------------+------------+------------+-----------+---------+
 |         GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    | AMOUNT  |
 +-----------------------+---------------+--------------+------------+------------+-----------+---------+
@@ -219,7 +219,7 @@ If we want show older records, date ranges can be specified using `--since` and
 
 ```
 $ journal ls --since=2018-06-01 --until=2018-07-31
-journal: displaying records between 2018-06-01 and 2018-07-31
+journal: displaying records for all accounts between 2018-06-01 and 2018-07-31
 +-----------------------+---------+----------+----------+---------+--------------------------------+
 |         GROUP         | RECORDS |   SUM    |  BUDGET  | BALANCE |          BALANCE BAR           |
 +-----------------------+---------+----------+----------+---------+--------------------------------+
@@ -236,7 +236,7 @@ that contain records.
 Options also be combined:
 ```
 $ journal ls --since=2018-01-01 --explain
-journal: displaying records between 2018-01-01 and 2018-07-28
+journal: displaying records for all accounts between 2018-01-01 and 2018-07-28
 +-----------------------+---------------+--------------+------------+------------+-----------+----------+
 |         GROUP         |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |   TEXT    |  AMOUNT  |
 +-----------------------+---------------+--------------+------------+------------+-----------+----------+
