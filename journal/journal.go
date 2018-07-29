@@ -61,7 +61,7 @@ type Writes struct {
 
 func (c *Config) load() error {
 	if len(c.Database) == 0 {
-		return fmt.Errorf("invalid path to database: %q", c.Database)
+		return fmt.Errorf("invalid database path: %q", c.Database)
 	}
 	if c.Database[0] == '~' {
 		if len(c.Database) > 1 && c.Database[1] != '/' {
@@ -84,7 +84,7 @@ func (c *Config) load() error {
 		}
 		for _, pattern := range g.Patterns {
 			if len(pattern) == 0 {
-				return fmt.Errorf("invalid pattern: %q", pattern)
+				return fmt.Errorf("group: %q: invalid pattern: %q", g.Name, pattern)
 			}
 			p, err := regexp.Compile(pattern)
 			if err != nil {
