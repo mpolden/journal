@@ -34,8 +34,9 @@ type Budget struct {
 
 // An Account identifies a finanical account.
 type Account struct {
-	Number string
-	Name   string
+	Number  string
+	Name    string
+	Records int64
 }
 
 // A Record is a record of a finanical transaction.

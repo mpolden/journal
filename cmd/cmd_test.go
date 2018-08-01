@@ -3,8 +3,10 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -25,48 +27,52 @@ const data = `"01.02.2017";"01.02.2017";"Transaction 1";"1.337,00";"1.337,00";""
 "20.04.2017";"20.04.2017";"Transaction 3";"42,00";"1.337,00";"";""
 `
 
-func tempFile(data string) (string, error) {
-	f, err := ioutil.TempFile("", "journal")
-	if err != nil {
-		return "", err
-	}
-	return f.Name(), ioutil.WriteFile(f.Name(), []byte(data), 0644)
+type files struct {
+	db   string
+	conf string
+	data string
+	dir  string
 }
 
-func testFiles(t *testing.T) (string, string, string) {
-	db, err := ioutil.TempFile("", "journal")
+func (f *files) removeAll() { os.RemoveAll(f.dir) }
+
+func testFiles(t *testing.T) files {
+	tempDir, err := ioutil.TempDir("", "journal")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	conf, err := tempFile(fmt.Sprintf(conf, db.Name()))
-	if err != nil {
+	dbName := filepath.Join(tempDir, "db")
+	confName := filepath.Join(tempDir, "conf")
+	dataName := filepath.Join(tempDir, "data")
+
+	if err := ioutil.WriteFile(confName, []byte(fmt.Sprintf(conf, dbName)), 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	data, err := tempFile(data)
-	if err != nil {
+	if err := ioutil.WriteFile(dataName, []byte(data), 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	return db.Name(), conf, data
+	return files{db: dbName, conf: confName, data: dataName, dir: tempDir}
 }
 
-func TestImport(t *testing.T) {
-	dbName, confName, dataName := testFiles(t)
-	defer os.Remove(confName)
-	defer os.Remove(dbName)
-	defer os.Remove(dataName)
-
-	var stdout, stderr bytes.Buffer
-	opts := Options{Config: confName, Writer: &stdout, Log: NewLogger(&stderr)}
+func importFile(t *testing.T, f files, stdout, stderr io.Writer) {
+	opts := Options{Config: f.conf, Writer: stdout, Log: NewLogger(stderr)}
 	imp := Import{Options: opts, Reader: "csv"}
 	imp.Args.Account = "1234.56.78900"
-	imp.Args.File = dataName
-
+	imp.Args.File = f.data
 	if err := imp.Execute(nil); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestImport(t *testing.T) {
+	f := testFiles(t)
+	defer f.removeAll()
+
+	var stdout, stderr bytes.Buffer
+	importFile(t, f, &stdout, &stderr)
 
 	want := `journal: created 1 new account(s)
 journal: imported 3 new record(s) out of 3 total
@@ -81,27 +87,15 @@ journal: imported 3 new record(s) out of 3 total
 }
 
 func TestExport(t *testing.T) {
-	dbName, confName, dataName := testFiles(t)
-	defer os.Remove(confName)
-	defer os.Remove(dbName)
-	defer os.Remove(dataName)
+	f := testFiles(t)
+	defer f.removeAll()
+	importFile(t, f, ioutil.Discard, ioutil.Discard)
 
 	var stdout, stderr bytes.Buffer
-	opts := Options{Config: confName, Writer: &stdout, Log: NewLogger(&stderr)}
-
-	imp := Import{Options: opts, Reader: "csv"}
-	imp.Args.Account = "1234.56.78900"
-	imp.Args.File = dataName
-
-	if err := imp.Execute(nil); err != nil {
-		t.Fatal(err)
+	export := Export{
+		Options: Options{Config: f.conf, Writer: &stdout, Log: NewLogger(&stderr)},
+		Since:   "2017-01-01",
 	}
-
-	stdout.Reset()
-	stderr.Reset()
-
-	export := Export{Options: opts, Since: "2017-01-01"}
-	export.Args.Account = imp.Args.Account
 
 	if err := export.Execute(nil); err != nil {
 		t.Fatal(err)
@@ -117,20 +111,15 @@ func TestExport(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	dbName, confName, dataName := testFiles(t)
-	defer os.Remove(confName)
-	defer os.Remove(dbName)
-	defer os.Remove(dataName)
+	f := testFiles(t)
+	defer f.removeAll()
+	importFile(t, f, ioutil.Discard, ioutil.Discard)
 
 	var stdout, stderr bytes.Buffer
-	opts := Options{Config: confName, Writer: &stdout, Log: NewLogger(&stderr), Color: "never"}
-	imp := Import{Options: opts, Reader: "csv"}
-	imp.Args.Account = "1234.56.78900"
-	imp.Args.File = dataName
-	if err := imp.Execute(nil); err != nil {
-		t.Fatal(err)
+	ls := List{
+		Options: Options{Config: f.conf, Writer: &stdout, Log: NewLogger(&stderr), Color: "never"},
+		Since:   "2017-01-01",
 	}
-	ls := List{Options: opts, Since: "2017-01-01"}
 	if err := ls.Execute(nil); err != nil {
 		t.Fatal(err)
 	}
@@ -164,6 +153,31 @@ func TestList(t *testing.T) {
 +------------+---------------+--------------+------------+------------+---------------+---------+
 `
 	if got := stdout.String(); want != got {
+		t.Errorf("want %q, got %q", want, got)
+	}
+}
+
+func TestAccounts(t *testing.T) {
+	f := testFiles(t)
+	defer f.removeAll()
+	importFile(t, f, ioutil.Discard, ioutil.Discard)
+
+	var stdout, stderr bytes.Buffer
+	acct := Accounts{
+		Options: Options{Config: f.conf, Writer: &stdout, Log: NewLogger(&stderr), Color: "never"},
+	}
+	if err := acct.Execute(nil); err != nil {
+		t.Fatal(err)
+	}
+
+	want := `+---------------+--------------+---------+
+|    NUMBER     |     NAME     | RECORDS |
++---------------+--------------+---------+
+| 1234.56.78900 | My account 1 |       3 |
++---------------+--------------+---------+
+`
+	if got := stdout.String(); want != got {
+		fmt.Println(got)
 		t.Errorf("want %q, got %q", want, got)
 	}
 }

@@ -26,6 +26,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	acct := cmd.Accounts{Options: opts}
+	if _, err := p.AddCommand("acct", "List accounts", "Display accounts in database", &acct); err != nil {
+		log.Fatal(err)
+	}
+
 	list := cmd.List{Options: opts}
 	if _, err := p.AddCommand("ls", "List records", "Display records in database", &list); err != nil {
 		log.Fatal(err)

@@ -45,6 +45,11 @@ type Export struct {
 	} `positional-args:"yes"`
 }
 
+// Accounts reprents options for the acct sub-command
+type Accounts struct {
+	Options
+}
+
 // List represents options for the export sub-command.
 type List struct {
 	Options
@@ -118,6 +123,33 @@ func (i *Import) Execute(args []string) error {
 	i.Log.Printf("created %d new account(s)", writes.Account)
 	i.Log.Printf("imported %d new record(s) out of %d total", writes.Record, len(rs))
 	return err
+}
+
+// Execute lists known accounts.
+func (a *Accounts) Execute(args []string) error {
+	j, err := journal.FromConfig(a.Config)
+	if err != nil {
+		return err
+	}
+
+	as, err := j.Accounts()
+	if err != nil {
+		return err
+	}
+
+	table := tablewriter.NewWriter(a.Writer)
+	table.SetHeader([]string{"Number", "Name", "Records"})
+	table.SetAutoWrapText(false)
+	for _, a := range as {
+		table.Append([]string{
+			a.Number,
+			a.Name,
+			strconv.FormatInt(a.Records, 10),
+		})
+	}
+	table.Render()
+
+	return nil
 }
 
 // Execute lists records contained in the journal.

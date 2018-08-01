@@ -230,6 +230,23 @@ func (j *Journal) writeAccounts() (int64, error) {
 	return j.db.AddAccounts(as)
 }
 
+// Accounts returns all accounts in the journal
+func (j *Journal) Accounts() ([]record.Account, error) {
+	as, err := j.db.SelectAccounts("")
+	if err != nil {
+		return nil, err
+	}
+	accounts := make([]record.Account, len(as))
+	for i, a := range as {
+		accounts[i] = record.Account{
+			Name:    a.Name,
+			Number:  a.Number,
+			Records: a.Records,
+		}
+	}
+	return accounts, nil
+}
+
 // Write writes records for accountNumber into the journal.
 func (j *Journal) Write(accountNumber string, records []record.Record) (Writes, error) {
 	var writes Writes
