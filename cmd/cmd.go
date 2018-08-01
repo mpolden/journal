@@ -180,6 +180,10 @@ func (l *List) Execute(args []string) error {
 		account = "account " + l.Args.Account
 	}
 	l.Log.Printf("displaying records for %s between %s and %s", account, s.Format(timeLayout), u.Format(timeLayout))
+	if len(rgs) == 0 {
+		l.Log.Printf("0 records found")
+		return nil
+	}
 
 	if l.Explain {
 		l.printAll(rgs, j.FormatAmount)
