@@ -39,8 +39,9 @@ type Client struct {
 
 // Account represents a financial account.
 type Account struct {
-	Number string `db:"number"`
-	Name   string `db:"name"`
+	Number  string `db:"number"`
+	Name    string `db:"name"`
+	Records int64  `db:"records"`
 }
 
 // Record represents a single financial record.
@@ -109,13 +110,17 @@ func (c *Client) SelectAccounts(accountNumber string) ([]Account, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	var as []Account
-	query := "SELECT number, name FROM account"
+	query := `
+SELECT number, name, COUNT(record.id) AS records
+FROM account
+LEFT JOIN record ON account.id = record.account_id
+`
 	args := []interface{}{}
 	if accountNumber != "" {
 		query += " WHERE number = ?"
 		args = append(args, accountNumber)
 	}
-	query += " ORDER BY number ASC"
+	query += " GROUP BY number ORDER BY number ASC"
 	err := c.db.Select(&as, query, args...)
 	return as, err
 }

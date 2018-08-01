@@ -21,7 +21,7 @@ func TestAddAccounts(t *testing.T) {
 	c := testClient()
 	accounts := []Account{
 		{Number: "1.2.3", Name: "Account 1"},
-		{Number: "4.5.6", Name: "Account 2"},
+		{Number: "4.5.6", Name: "Account 2", Records: 1},
 		{Number: "7.8.9", Name: "Account 3"},
 		{Number: "1.2.3", Name: "Account 1"}, // Duplicate
 	}
@@ -30,7 +30,11 @@ func TestAddAccounts(t *testing.T) {
 		t.Fatal(err)
 	}
 	if want := int64(3); n != want {
-		t.Errorf("want %d accounts, got %d", want, n)
+		t.Errorf("got %d accounts, want %d", n, want)
+	}
+	rs := []Record{{Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42}}
+	if _, err := c.AddRecords(accounts[1].Number, rs); err != nil {
+		t.Fatal(err)
 	}
 	as, err := c.SelectAccounts("")
 	if err != nil {
@@ -38,10 +42,13 @@ func TestAddAccounts(t *testing.T) {
 	}
 	for i, a := range as {
 		if accounts[i].Number != a.Number {
-			t.Errorf("want Number = %s, got %s", accounts[i].Number, a.Number)
+			t.Errorf("#%d: got Number = %s, want %s", i, a.Number, accounts[i].Number)
 		}
 		if accounts[i].Name != a.Name {
-			t.Errorf("want Number = %s, got %s", accounts[i].Number, a.Number)
+			t.Errorf("#%d: got Name = %s, want %s", i, a.Name, accounts[i].Name)
+		}
+		if accounts[i].Records != a.Records {
+			t.Errorf("#%d: got Records = %d, want %d", i, a.Records, accounts[i].Records)
 		}
 	}
 }
