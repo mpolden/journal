@@ -257,7 +257,7 @@ func (j *Journal) Write(accountNumber string, records []record.Record) (Writes, 
 	writes.Account = n
 	rs := make([]sql.Record, len(records))
 	for i, r := range records {
-		rs[i] = sql.Record{Time: r.Time.Unix(), Text: r.Text, Amount: r.Amount}
+		rs[i] = sql.Record{Time: r.Time.Unix(), Text: r.Text, Amount: r.Amount, Balance: r.Balance}
 	}
 	n, err = j.db.AddRecords(accountNumber, rs)
 	writes.Record = n

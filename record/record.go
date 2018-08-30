@@ -45,6 +45,7 @@ type Record struct {
 	Time    time.Time
 	Text    string
 	Amount  int64
+	Balance int64
 }
 
 // A Group is a list of recordes grouped together under a common name.
@@ -232,19 +233,23 @@ func (r *reader) Read() ([]Record, error) {
 			return nil, err
 		}
 		line++
-		if len(record) < 4 {
+		if len(record) < 5 {
 			continue
 		}
 		t, err := time.Parse("02.01.2006", record[0])
 		if err != nil {
-			return nil, errors.Wrapf(err, "invalid time found on line %d: %q", line, record[0])
+			return nil, errors.Wrapf(err, "invalid time on line %d: %q", line, record[0])
 		}
 		text := record[2]
 		amount, err := r.parseAmount(record[3])
 		if err != nil {
-			return nil, errors.Wrapf(err, "invalid amount found on line %d: %q", line, record[3])
+			return nil, errors.Wrapf(err, "invalid amount on line %d: %q", line, record[3])
 		}
-		rs = append(rs, Record{Time: t, Text: text, Amount: amount})
+		balance, err := r.parseAmount(record[4])
+		if err != nil {
+			return nil, errors.Wrapf(err, "invalid balance on line %d: %q", line, record[4])
+		}
+		rs = append(rs, Record{Time: t, Text: text, Amount: amount, Balance: balance})
 	}
 	return rs, nil
 }

@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS record (
   time INTEGER NOT NULL,
   text TEXT NOT NULL,
   amount INTEGER NOT NULL,
-  CONSTRAINT record_unique UNIQUE(account_id, time, text, amount),
+  balance INTEGER NOT NULL,
+  CONSTRAINT record_unique UNIQUE(account_id, time, text, amount, balance),
   FOREIGN KEY(account_id) REFERENCES account(id)
 );
 
@@ -46,9 +47,10 @@ type Account struct {
 
 // Record represents a single financial record.
 type Record struct {
-	Time   int64  `db:"time"`
-	Text   string `db:"text"`
-	Amount int64  `db:"amount"`
+	Time    int64  `db:"time"`
+	Text    string `db:"text"`
+	Amount  int64  `db:"amount"`
+	Balance int64  `db:"balance"`
 	Account
 }
 
@@ -144,24 +146,24 @@ func (c *Client) AddRecords(accountNumber string, records []Record) (int64, erro
 	query := `
 SELECT COUNT(*)
 FROM record
-WHERE account_id = $1 AND time = $2 AND text = $3 AND amount = $4
+WHERE account_id = $1 AND time = $2 AND text = $3 AND amount = $4 AND balance = $5
 LIMIT 1`
 
 	insertQuery := `
-INSERT INTO record (account_id, time, text, amount)
-VALUES ($1, $2, $3, $4)
+INSERT INTO record (account_id, time, text, amount, balance)
+VALUES ($1, $2, $3, $4, $5)
 `
 
 	var rows int64
 	for _, r := range records {
 		count := 0
-		if err := tx.Get(&count, query, accountID, r.Time, r.Text, r.Amount); err != nil {
+		if err := tx.Get(&count, query, accountID, r.Time, r.Text, r.Amount, r.Balance); err != nil {
 			return 0, err
 		}
 		if count > 0 {
 			continue
 		}
-		res, err := tx.Exec(insertQuery, accountID, r.Time, r.Text, r.Amount)
+		res, err := tx.Exec(insertQuery, accountID, r.Time, r.Text, r.Amount, r.Balance)
 		if err != nil {
 			return 0, err
 		}
@@ -182,7 +184,7 @@ func (c *Client) SelectRecordsBetween(accountNumber string, since, until time.Ti
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	query := `
-SELECT name, number, time, text, amount
+SELECT name, number, time, text, amount, balance
 FROM record
 INNER JOIN account ON account_id = account.id
 `

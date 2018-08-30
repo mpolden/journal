@@ -19,13 +19,14 @@ func testReadFrom(lines string, t *testing.T) {
 	}
 
 	var tests = []struct {
-		t      time.Time
-		text   string
-		amount int64
+		t       time.Time
+		text    string
+		amount  int64
+		balance int64
 	}{
-		{date(2017, 2, 1), "Transaction 1", 133700},
-		{date(2017, 3, 10), "Transaction 2", -4200},
-		{date(2017, 4, 20), "Transaction 3", 4200},
+		{date(2017, 2, 1), "Transaction 1", 133700, 133700},
+		{date(2017, 3, 10), "Transaction 2", -4200, 129500},
+		{date(2017, 4, 20), "Transaction 3", 4200, 133700},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))
@@ -39,6 +40,9 @@ func testReadFrom(lines string, t *testing.T) {
 		}
 		if rs[i].Amount != tt.amount {
 			t.Errorf("#%d: want Amount = %d, got %d", i, tt.amount, rs[i].Amount)
+		}
+		if rs[i].Balance != tt.balance {
+			t.Errorf("#%d: want Balance = %d, got %d", i, tt.balance, rs[i].Balance)
 		}
 	}
 }

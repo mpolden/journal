@@ -62,16 +62,17 @@ func TestAddRecords(t *testing.T) {
 	}
 	records := []Record{
 		{Account: as[0], Time: date(2017, 4, 20).Unix(), Text: "Transaction 4", Amount: 5678},
-		{Account: as[0], Time: date(2017, 3, 15).Unix(), Text: "Transaction 3", Amount: 24},
-		{Account: as[0], Time: date(2017, 2, 10).Unix(), Text: "Transaction 2", Amount: 1234},
+		{Account: as[0], Time: date(2017, 3, 15).Unix(), Text: "Transaction 3", Amount: 24, Balance: 1234},
+		{Account: as[0], Time: date(2017, 2, 10).Unix(), Text: "Transaction 2", Amount: 1234, Balance: 5678},
+		{Account: as[0], Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42, Balance: 42},
 		{Account: as[0], Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42},
-		{Account: as[0], Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42}, // Duplicate, ignored
+		{Account: as[0], Time: date(2017, 1, 1).Unix(), Text: "Transaction 1", Amount: 42, Balance: 42}, // Duplicate, ignored
 	}
 	n, err := c.AddRecords(number, records)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := int64(4); n != want {
+	if want := int64(5); n != want {
 		t.Errorf("want %d records, got %d", want, n)
 	}
 	rs, err := c.SelectRecords(number)
@@ -83,19 +84,22 @@ func TestAddRecords(t *testing.T) {
 	}
 	for i, r := range rs {
 		if records[i].Account.Number != r.Account.Number {
-			t.Errorf("want Account.Number = %q, got %q", records[i].Account.Number, r.Account.Number)
+			t.Errorf("#%d: want Account.Number = %q, got %q", i, records[i].Account.Number, r.Account.Number)
 		}
 		if records[i].Account.Name != r.Account.Name {
-			t.Errorf("want Account.Name = %q, got %q", records[i].Account.Name, r.Account.Name)
+			t.Errorf("#%d: want Account.Name = %q, got %q", i, records[i].Account.Name, r.Account.Name)
 		}
 		if records[i].Time != r.Time {
-			t.Errorf("want Time = %d, got %d", records[i].Time, r.Time)
+			t.Errorf("#%d: want Time = %d, got %d", i, records[i].Time, r.Time)
 		}
 		if records[i].Text != r.Text {
-			t.Errorf("want Text = %q, got %q", records[i].Text, r.Text)
+			t.Errorf("#%d: want Text = %q, got %q", i, records[i].Text, r.Text)
 		}
 		if records[i].Amount != r.Amount {
-			t.Errorf("want Amount = %d, got %d", records[i].Amount, r.Amount)
+			t.Errorf("#%d: want Amount = %d, got %d", i, records[i].Amount, r.Amount)
+		}
+		if records[i].Balance != r.Balance {
+			t.Errorf("#%d: want Balance = %d, got %d", i, records[i].Balance, r.Balance)
 		}
 	}
 
