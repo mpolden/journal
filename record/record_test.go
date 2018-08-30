@@ -85,6 +85,13 @@ func TestID(t *testing.T) {
 			Text:    "Transaction 2",
 			Amount:  42,
 		}, "2c07328f92"},
+		{Record{
+			Account: Account{Number: "1.2.4"},
+			Time:    date(2018, 1, 1),
+			Text:    "Transaction 2",
+			Amount:  42,
+			Balance: 1337,
+		}, "a56d3a1128"},
 	}
 	for i, tt := range tests {
 		if got := tt.r.ID(); got != tt.id {

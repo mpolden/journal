@@ -99,6 +99,10 @@ func (r *Record) ID() string {
 	buf.WriteString(r.Time.Format("2006-01-02"))
 	buf.WriteString(r.Text)
 	buf.WriteString(strconv.FormatInt(r.Amount, 10))
+	// Balance is considered optional, only include it in the hash if non-zero
+	if r.Balance != 0 {
+		buf.WriteString(strconv.FormatInt(r.Balance, 10))
+	}
 	sum := sha1.Sum(buf.Bytes())
 	return fmt.Sprintf("%x", sum)[:10]
 }
