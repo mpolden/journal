@@ -30,8 +30,8 @@ type Import struct {
 	Options
 	Reader string `short:"r" long:"reader" description:"Name of reader to use when importing data" choice:"csv" choice:"komplett" choice:"komplettsparing" choice:"norwegian" choice:"auto" default:"auto"`
 	Args   struct {
-		Account string `description:"Account number" positional-arg-name:"account-number"`
-		File    string `description:"File containing records to import" positional-arg-name:"import-file"`
+		Account string   `description:"Account number" positional-arg-name:"account-number"`
+		Files   []string `description:"File containing records to import" positional-arg-name:"import-file"`
 	} `positional-args:"yes" required:"yes"`
 }
 
@@ -103,26 +103,33 @@ func timeRange(since, until string) (time.Time, time.Time, error) {
 
 // Execute imports records into the journal from a file.
 func (i *Import) Execute(args []string) error {
-	f, err := os.Open(i.Args.File)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
 	j, err := journal.FromConfig(i.Config)
 	if err != nil {
 		return err
 	}
 
-	rs, err := j.ReadFile(i.Reader, f)
-	if err != nil {
-		return err
+	for _, file := range i.Args.Files {
+		f, err := os.Open(file)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		i.Log.Printf("importing records from %s", file)
+
+		rs, err := j.ReadFile(i.Reader, f)
+		if err != nil {
+			return err
+		}
+
+		writes, err := j.Write(i.Args.Account, rs)
+		i.Log.Printf("created %d new account(s)", writes.Account)
+		i.Log.Printf("imported %d new record(s) out of %d total", writes.Record, len(rs))
+		if err != nil {
+			return err
+		}
 	}
 
-	writes, err := j.Write(i.Args.Account, rs)
-	i.Log.Printf("created %d new account(s)", writes.Account)
-	i.Log.Printf("imported %d new record(s) out of %d total", writes.Record, len(rs))
-	return err
+	return nil
 }
 
 // Execute lists known accounts.

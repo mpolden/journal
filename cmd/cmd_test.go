@@ -61,7 +61,7 @@ func importFile(t *testing.T, f files, stdout, stderr io.Writer) {
 	opts := Options{Config: f.conf, Writer: stdout, Log: NewLogger(stderr)}
 	imp := Import{Options: opts, Reader: "csv"}
 	imp.Args.Account = "1234.56.78900"
-	imp.Args.File = f.data
+	imp.Args.Files = []string{f.data}
 	if err := imp.Execute(nil); err != nil {
 		t.Fatal(err)
 	}
@@ -74,9 +74,10 @@ func TestImport(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	importFile(t, f, &stdout, &stderr)
 
-	want := `journal: created 1 new account(s)
+	want := fmt.Sprintf(`journal: importing records from %s
+journal: created 1 new account(s)
 journal: imported 3 new record(s) out of 3 total
-`
+`, f.data)
 	if got := stderr.String(); want != got {
 		t.Errorf("want %q, got %q", want, got)
 	}
