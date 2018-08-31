@@ -28,7 +28,7 @@ endif
 check-fmt:
 	bash -c "diff --line-format='%L' <(echo -n) <(gofmt -d -s .)"
 
-lint: check-fmt vet megacheck golint
+lint: check-fmt vet golint
 
 deps:
 	go get -d -v ./...
