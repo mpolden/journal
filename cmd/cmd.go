@@ -299,7 +299,7 @@ func (l *List) colorize() bool {
 
 func (l *List) printAll(rgs []record.Group, group string, fmtAmount func(int64) string, sortField record.Field) {
 	table := tablewriter.NewWriter(l.Writer)
-	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
+	table.SetHeader([]string{"Account", "Account name", "ID", "Date", "Group", "Text", "Amount"})
 	table.SetColumnAlignment([]int{
 		0, 0, 0, 0, 0, 0, tablewriter.ALIGN_RIGHT,
 	})
@@ -318,11 +318,11 @@ func (l *List) printAll(rgs []record.Group, group string, fmtAmount func(int64) 
 			continue
 		}
 		row := []string{
-			groupName,
 			r.Account.Number,
 			r.Account.Name,
 			r.ID(),
 			r.Time.Format("2006-01-02"),
+			groupName,
 			r.Text,
 			fmtAmount(r.Amount),
 		}
