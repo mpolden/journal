@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"sort"
 	"strconv"
 	"time"
 
@@ -56,7 +55,7 @@ type List struct {
 	Explain string `short:"e" long:"explain" optional:"yes" optional-value:"all" value-name:"GROUP" description:"Print records in GROUP. Defaults to all groups"`
 	Since   string `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
 	Until   string `short:"u" long:"until" description:"Print records until this date" value-name:"YYYY-MM-DD"`
-	OrderBy string `short:"o" long:"order-by" description:"Print records ordered by a specific field" choice:"sum" choice:"date" choice:"name" default:"sum"`
+	OrderBy string `short:"o" long:"order" description:"Print records ordered by a specific field" choice:"sum" choice:"date" choice:"group" choice:"text" default:"sum"`
 	Args    struct {
 		Account string `description:"Only print records for given account number" positional-arg-name:"account-number"`
 	} `positional-args:"yes"`
@@ -171,14 +170,13 @@ func (l *List) Execute(args []string) error {
 		return err
 	}
 
-	rs, err := j.Read(l.Args.Account, s, u)
+	sortField, err := l.sortField()
 	if err != nil {
 		return err
 	}
 
-	rgs := j.Assort(rs)
-
-	if err := l.sort(rgs); err != nil {
+	rs, err := j.Read(l.Args.Account, s, u)
+	if err != nil {
 		return err
 	}
 
@@ -187,46 +185,39 @@ func (l *List) Execute(args []string) error {
 		account = "account " + l.Args.Account
 	}
 	l.Log.Printf("displaying records for %s between %s and %s", account, s.Format(timeLayout), u.Format(timeLayout))
+
+	rgs := j.Assort(rs)
 	if len(rgs) == 0 {
 		l.Log.Printf("0 records found")
 		return nil
 	}
 
 	if l.Explain != "" {
-		l.printAll(rgs, l.Explain, j.FormatAmount)
+		l.printAll(rgs, l.Explain, j.FormatAmount, sortField)
 	} else {
-		l.printGroups(rgs, j.FormatAmount)
+		l.printGroups(rgs, j.FormatAmount, sortField)
 	}
 	return nil
 }
 
-func (l *List) sort(rgs []record.Group) error {
+func (l *List) sortField() (record.Field, error) {
 	switch l.OrderBy {
-	case "name":
-		break // default sorting in journal
+	case "group":
+		return record.GroupField, nil
+	case "text":
+		return record.NameField, nil
 	case "date":
 		if l.Explain == "" {
-			return fmt.Errorf("grouped output cannot be ordered by date")
+			return 0, fmt.Errorf("grouped output cannot be sorted by date")
 		}
-	default:
-		sort.Slice(rgs, func(i, j int) bool { return rgs[i].Sum() < rgs[j].Sum() })
+		return record.TimeField, nil
+	case "sum", "":
+		return record.SumField, nil
 	}
-	// Sort records in each group
-	for _, rg := range rgs {
-		sort.Slice(rg.Records, func(i, j int) bool {
-			switch l.OrderBy {
-			case "name":
-				return rg.Records[i].Text < (rg.Records[j].Text)
-			case "date":
-				return rg.Records[i].Time.After(rg.Records[j].Time)
-			}
-			return rg.Records[i].Amount < rg.Records[j].Amount
-		})
-	}
-	return nil
+	return 0, fmt.Errorf("invalid sort field: %q", l.OrderBy)
 }
 
-func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
+func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string, sortField record.Field) {
 	table := tablewriter.NewWriter(l.Writer)
 	var rows [][]string
 	headers := []string{"Group", "Records", "Sum", "Budget", "Balance", "Balance bar"}
@@ -250,6 +241,7 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string) {
 		max:     record.MaxBalance(rgs),
 		enabled: l.colorize(),
 	}
+	record.SortGroup(rgs, sortField)
 	for _, rg := range rgs {
 		var (
 			records = len(rg.Records)
@@ -305,28 +297,36 @@ func (l *List) colorize() bool {
 	return !l.Options.IsPipe
 }
 
-func (l *List) printAll(rgs []record.Group, group string, fmtAmount func(int64) string) {
+func (l *List) printAll(rgs []record.Group, group string, fmtAmount func(int64) string, sortField record.Field) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
 	table.SetColumnAlignment([]int{
 		0, 0, 0, 0, 0, 0, tablewriter.ALIGN_RIGHT,
 	})
+	gs := make(map[string]string)
+	rs := []record.Record{}
 	for _, rg := range rgs {
-		if group != "all" && group != rg.Name {
+		for _, r := range rg.Records {
+			gs[r.ID()] = rg.Name
+			rs = append(rs, r)
+		}
+	}
+	record.Sort(rs, sortField)
+	for _, r := range rs {
+		groupName := gs[r.ID()]
+		if group != "all" && group != groupName {
 			continue
 		}
-		for _, r := range rg.Records {
-			row := []string{
-				rg.Name,
-				r.Account.Number,
-				r.Account.Name,
-				r.ID(),
-				r.Time.Format("2006-01-02"),
-				r.Text,
-				fmtAmount(r.Amount),
-			}
-			table.Append(row)
+		row := []string{
+			groupName,
+			r.Account.Number,
+			r.Account.Name,
+			r.ID(),
+			r.Time.Format("2006-01-02"),
+			r.Text,
+			fmtAmount(r.Amount),
 		}
+		table.Append(row)
 	}
 	table.Render()
 }

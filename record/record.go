@@ -15,10 +15,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+type Field int
+
 const (
-	decimalSeparator  = "."
-	thousandSeparator = ","
-	byteOrderMark     = '\uFEFF'
+	decimalSeparator        = "."
+	thousandSeparator       = ","
+	byteOrderMark           = '\uFEFF'
+	NameField         Field = iota
+	GroupField
+	TimeField
+	SumField
 )
 
 // Reader is the interface for record readers.
@@ -200,6 +206,34 @@ func AssortPeriodFunc(records []Record, timeFn func(time.Time) time.Time, assort
 	}
 	sort.Slice(ps, func(i, j int) bool { return ps[i].Time.After(ps[j].Time) })
 	return ps
+}
+
+// Sort sorts a list of records by field.
+func Sort(rs []Record, field Field) {
+	sort.Slice(rs, func(i, j int) bool {
+		switch field {
+		case NameField:
+			return rs[i].Text < (rs[j].Text)
+		case TimeField:
+			return rs[i].Time.Before(rs[j].Time)
+		case SumField:
+			return rs[i].Amount < rs[j].Amount
+		}
+		return false
+	})
+}
+
+// SortGroups sorts a list of record groups by field.
+func SortGroup(gs []Group, field Field) {
+	sort.Slice(gs, func(i, j int) bool {
+		switch field {
+		case GroupField:
+			return gs[i].Name < gs[j].Name
+		case SumField:
+			return gs[i].Sum() < gs[j].Sum()
+		}
+		return false
+	})
 }
 
 func (r *reader) parseAmount(s string) (int64, error) {

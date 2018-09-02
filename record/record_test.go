@@ -265,3 +265,58 @@ func TestMinBalance(t *testing.T) {
 		}
 	}
 }
+
+func TestSort(t *testing.T) {
+	var tests = []struct {
+		rs    []Record
+		want  []Record
+		field Field
+	}{
+		{
+			[]Record{{Text: "B"}, {Text: "A"}},
+			[]Record{{Text: "A"}, {Text: "B"}},
+			NameField,
+		},
+		{
+			[]Record{{Amount: 1000}, {Amount: 500}},
+			[]Record{{Amount: 500}, {Amount: 1000}},
+			SumField,
+		},
+		{
+			[]Record{{Time: date(2018, 1, 1)}, {Time: date(2017, 1, 1)}},
+			[]Record{{Time: date(2017, 1, 1)}, {Time: date(2018, 1, 1)}},
+			TimeField,
+		},
+	}
+	for i, tt := range tests {
+		Sort(tt.rs, tt.field)
+		if !reflect.DeepEqual(tt.rs, tt.want) {
+			t.Errorf("#%d: want %+v, got %+v", i, tt.want, tt.rs)
+		}
+	}
+}
+
+func TestGroup(t *testing.T) {
+	var tests = []struct {
+		gs    []Group
+		want  []Group
+		field Field
+	}{
+		{
+			[]Group{{Name: "B"}, {Name: "A"}},
+			[]Group{{Name: "A"}, {Name: "B"}},
+			GroupField,
+		},
+		{
+			[]Group{{Records: []Record{{Amount: 1000}}}, {Records: []Record{{Amount: 500}}}},
+			[]Group{{Records: []Record{{Amount: 500}}}, {Records: []Record{{Amount: 1000}}}},
+			SumField,
+		},
+	}
+	for i, tt := range tests {
+		SortGroup(tt.gs, tt.field)
+		if !reflect.DeepEqual(tt.gs, tt.want) {
+			t.Errorf("#%d: want %+v, got %+v", i, tt.want, tt.gs)
+		}
+	}
+}
