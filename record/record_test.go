@@ -27,6 +27,7 @@ func testReadFrom(lines string, t *testing.T) {
 		{date(2017, 2, 1), "Transaction 1", 133700, 133700},
 		{date(2017, 3, 10), "Transaction 2", -4200, 129500},
 		{date(2017, 4, 20), "Transaction 3", 4200, 133700},
+		{date(2017, 5, 30), "Transaction 4", 4200, 0},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))
@@ -51,6 +52,7 @@ func TestReadFrom(t *testing.T) {
 	lines := `"01.02.2017";"01.02.2017";"Transaction 1";"1.337,00";"1.337,00";"";""
 "10.03.2017";"10.03.2017";"Transaction 2";"-42,00";"1.295,00";"";""
 "20.04.2017";"20.04.2017";"Transaction 3";"42,00";"1.337,00";"";""
+"30.05.2017";"30.05.2017";"Transaction 4";"42,00";"";"";""
 `
 	testReadFrom(lines, t)
 	testReadFrom(string(byteOrderMark)+lines, t)

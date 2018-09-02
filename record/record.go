@@ -292,9 +292,12 @@ func (r *reader) Read() ([]Record, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid amount on line %d: %q", line, record[3])
 		}
-		balance, err := r.parseAmount(record[4])
-		if err != nil {
-			return nil, errors.Wrapf(err, "invalid balance on line %d: %q", line, record[4])
+		var balance int64
+		if record[4] != "" {
+			balance, err = r.parseAmount(record[4])
+			if err != nil {
+				return nil, errors.Wrapf(err, "invalid balance on line %d: %q", line, record[4])
+			}
 		}
 		rs = append(rs, Record{Time: t, Text: text, Amount: amount, Balance: balance})
 	}
