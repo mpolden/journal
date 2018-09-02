@@ -2,16 +2,17 @@
 
 [![Build Status](https://travis-ci.org/mpolden/journal.svg)](https://travis-ci.org/mpolden/journal)
 
-`journal` is a program for recording and displaying financial records.
+`journal` is a program for storing and displaying financial records.
 
 ## Features
 
 * Import financial records from multiple Norwegian banks, such as Eika Group
-(including local banks), Storebrand, Bank Norwegian and Komplett Bank
-* Identify spending habits using automatic grouping of records
-* Define budgets per record group
-* Export grouped records for further processing in other programs
-* Persistent SQL database of imported records
+(most local banks), Storebrand, Bank Norwegian and Komplett Bank.
+* Identify spending habits using automatic grouping of records.
+* Define budgets for record groups.
+* Export record groups for further processing in other programs.
+* Take ownership of your financial records. All data is stored in a SQLite
+  database.
 
 ## Installation
 
@@ -112,12 +113,12 @@ can be found with `journal ls --explain`.
 
 A monthly budget can be set per group by with the `budget` key. The budget is
 specified as one-hundredth of the currency. `budget = -50000` means a budget of
-*-500.00 NOK* .
+*-500,00 NOK* .
 
 When listing records for multiple months, the budget will be multiplied by the
 number of months in the record time range. E.g. with `budget = -50000` and
 records occurring in all months between *2018-05-13* and *2018-07-05*, the total
-budget will be `2 * -50000 = -100000`.
+budget will be `3 * -50000 = -150000`.
 
 It's also possible to set a custom budget for each month using the `budgets`
 key. The value of `budgets` has to be an array of 12 numbers, one per month. If
@@ -158,7 +159,7 @@ journal: created 1 new account(s)
 journal: imported 10 new record(s) out of 10 total
 ```
 
-Imported records have now been persisted in a SQLite database located in
+Records have now been stored in a SQLite database located in
 `/home/user/journal.db`.
 
 Repeating the import only imports records `journal` hasn't seen before, so
