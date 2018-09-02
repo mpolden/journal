@@ -1,4 +1,4 @@
-all: deps lint test install
+all: lint test install
 
 fmt:
 	go fmt ./...
@@ -21,9 +21,6 @@ check-fmt:
 	bash -c "diff --line-format='%L' <(echo -n) <(gofmt -d -s .)"
 
 lint: check-fmt vet golint
-
-deps:
-	go get -d -v ./...
 
 install:
 	go install ./...
