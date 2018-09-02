@@ -15,15 +15,24 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Field identifies a record field.
 type Field int
 
 const (
-	decimalSeparator        = "."
-	thousandSeparator       = ","
-	byteOrderMark           = '\uFEFF'
-	NameField         Field = iota
+	decimalSeparator  = "."
+	thousandSeparator = ","
+	byteOrderMark     = '\uFEFF'
+
+	// NameField is the text field of a record.
+	NameField Field = iota
+
+	// GroupField is the name field of a record group.
 	GroupField
+
+	// TimeField is the time field of a record.
 	TimeField
+
+	// SumField is the sum field of a record or record group.
 	SumField
 )
 
@@ -223,7 +232,7 @@ func Sort(rs []Record, field Field) {
 	})
 }
 
-// SortGroups sorts a list of record groups by field.
+// SortGroup sorts a list of record groups by field.
 func SortGroup(gs []Group, field Field) {
 	sort.Slice(gs, func(i, j int) bool {
 		switch field {
