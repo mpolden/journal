@@ -43,7 +43,7 @@ Example:
 ```toml
 database = "/home/user/journal.db"
 comma = "."
-defaultGroup = "*** UNMATCHED ***"
+defaultGroup = "* ungrouped *"
 
 [[accounts]]
 number = "1234.56.78900"
@@ -92,7 +92,7 @@ stored.
 Defaults to `.`
 
 `defaultGroup` is the default group name to use for unmatched records. Defaults
-to `*** UNMATCHED ***`.
+to `* ungrouped *`.
 
 `[[accounts]]` declares known bank accounts. The section can be repeated to
 define multiple accounts. Importing records for an unknown account is an error.

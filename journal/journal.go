@@ -169,7 +169,7 @@ func New(conf Config) (*Journal, error) {
 	}
 	defaultGroup := conf.DefaultGroup
 	if defaultGroup == "" {
-		defaultGroup = "*** UNMATCHED ***"
+		defaultGroup = "* ungrouped *"
 	}
 	return &Journal{
 		db:           db,
