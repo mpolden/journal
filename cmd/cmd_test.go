@@ -138,7 +138,7 @@ func TestList(t *testing.T) {
 		t.Errorf("want %q, got %q", want, got)
 	}
 
-	ls.Explain = true
+	ls.Explain = "all"
 	stdout.Reset()
 
 	if err := ls.Execute(nil); err != nil {

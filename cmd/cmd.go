@@ -53,7 +53,7 @@ type Accounts struct {
 // List represents options for the export sub-command.
 type List struct {
 	Options
-	Explain bool   `short:"e" long:"explain" description:"Print all records and their group"`
+	Explain string `short:"e" long:"explain" optional:"yes" optional-value:"all" value-name:"GROUP" description:"Print records in GROUP. Defaults to all groups"`
 	Since   string `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
 	Until   string `short:"u" long:"until" description:"Print records until this date" value-name:"YYYY-MM-DD"`
 	OrderBy string `short:"o" long:"order-by" description:"Print records ordered by a specific field" choice:"sum" choice:"date" choice:"name" default:"sum"`
@@ -192,8 +192,8 @@ func (l *List) Execute(args []string) error {
 		return nil
 	}
 
-	if l.Explain {
-		l.printAll(rgs, j.FormatAmount)
+	if l.Explain != "" {
+		l.printAll(rgs, l.Explain, j.FormatAmount)
 	} else {
 		l.printGroups(rgs, j.FormatAmount)
 	}
@@ -205,7 +205,7 @@ func (l *List) sort(rgs []record.Group) error {
 	case "name":
 		break // default sorting in journal
 	case "date":
-		if !l.Explain {
+		if l.Explain == "" {
 			return fmt.Errorf("grouped output cannot be ordered by date")
 		}
 	default:
@@ -305,13 +305,16 @@ func (l *List) colorize() bool {
 	return !l.Options.IsPipe
 }
 
-func (l *List) printAll(rgs []record.Group, fmtAmount func(int64) string) {
+func (l *List) printAll(rgs []record.Group, group string, fmtAmount func(int64) string) {
 	table := tablewriter.NewWriter(l.Writer)
 	table.SetHeader([]string{"Group", "Account", "Account name", "ID", "Date", "Text", "Amount"})
 	table.SetColumnAlignment([]int{
 		0, 0, 0, 0, 0, 0, tablewriter.ALIGN_RIGHT,
 	})
 	for _, rg := range rgs {
+		if group != "all" && group != rg.Name {
+			continue
+		}
 		for _, r := range rg.Records {
 			row := []string{
 				rg.Name,
