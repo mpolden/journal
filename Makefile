@@ -1,15 +1,15 @@
 all: lint test install
 
-fmt:
-	go fmt ./...
+deps:
+	go get ./...
 
-test:
+test: deps
 	go test ./...
 
-vet:
+vet: deps
 	go vet ./...
 
-golint:
+golint: deps
 ifdef TRAVIS
 	golint 2> /dev/null; if [ $$? -eq 127 ]; then \
 		go get -v github.com/golang/lint/golint; \
@@ -22,5 +22,5 @@ check-fmt:
 
 lint: check-fmt vet golint
 
-install:
+install: deps
 	go install ./...
