@@ -1,7 +1,6 @@
 package journal
 
 import (
-	"bytes"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -10,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -184,17 +184,17 @@ func New(conf Config) (*Journal, error) {
 func (j *Journal) FormatAmount(n int64) string {
 	i := n / 100
 	f := n % 100
-	var buf bytes.Buffer
+	var sb strings.Builder
 	if f < 0 {
 		f *= -1
 		if i == 0 {
-			buf.WriteRune('-')
+			sb.WriteRune('-')
 		}
 	}
-	buf.WriteString(strconv.FormatInt(i, 10))
-	buf.WriteString(j.Comma)
-	buf.WriteString(fmt.Sprintf("%02d", f))
-	return buf.String()
+	sb.WriteString(strconv.FormatInt(i, 10))
+	sb.WriteString(j.Comma)
+	sb.WriteString(fmt.Sprintf("%02d", f))
+	return sb.String()
 }
 
 // ReadFile uses reader to read records from file f. If reader is empty, the reader to use will be guessed from the //
