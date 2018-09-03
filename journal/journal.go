@@ -298,16 +298,18 @@ func (j *Journal) findGroup(r record.Record) *record.Group {
 			continue
 		}
 		for _, id := range g.IDs {
-			if r.ID() == id {
-				if g.Discard {
-					return nil
-				}
-				rg := record.NewGroup(g.Name, record.Budget{
-					Default: g.Budget,
-					Months:  g.Budgets,
-				})
-				return &rg
+			if r.ID() != id {
+				continue
 			}
+			if g.Discard {
+				return nil
+			}
+			rg := record.NewGroup(g.Name, record.Budget{
+				Default: g.Budget,
+				Months:  g.Budgets,
+			})
+			return &rg
+
 		}
 	}
 	for _, g := range j.groups {
@@ -315,16 +317,17 @@ func (j *Journal) findGroup(r record.Record) *record.Group {
 			continue
 		}
 		for _, p := range g.patterns {
-			if p.MatchString(r.Text) {
-				if g.Discard {
-					return nil
-				}
-				rg := record.NewGroup(g.Name, record.Budget{
-					Default: g.Budget,
-					Months:  g.Budgets,
-				})
-				return &rg
+			if !p.MatchString(r.Text) {
+				continue
 			}
+			if g.Discard {
+				return nil
+			}
+			rg := record.NewGroup(g.Name, record.Budget{
+				Default: g.Budget,
+				Months:  g.Budgets,
+			})
+			return &rg
 		}
 	}
 	return &record.Group{Name: j.DefaultGroup}
