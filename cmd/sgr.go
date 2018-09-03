@@ -27,7 +27,7 @@ func (s *sgr) bar(n int64) string {
 	if barSize > 0 {
 		pos = n / barSize
 	}
-	sb := strings.Builder{}
+	var sb strings.Builder
 	fill := ' '
 	symbol := func(sym rune, cs ...string) {
 		if s.enabled {
