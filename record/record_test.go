@@ -298,7 +298,7 @@ func TestSort(t *testing.T) {
 	}
 }
 
-func TestGroup(t *testing.T) {
+func TestSortGroup(t *testing.T) {
 	var tests = []struct {
 		gs    []Group
 		want  []Group
