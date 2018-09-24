@@ -70,6 +70,12 @@ type Group struct {
 	budget  Budget
 }
 
+// A TimePeriod can keep state if we want to print bugdets for groups which does not hold records for every month.
+type TimePeriod struct {
+	Since time.Time
+	Until time.Time
+}
+
 // A Period stores record groups for specific moment in time.
 type Period struct {
 	Time   time.Time
@@ -122,15 +128,23 @@ func (r *Record) ID() string {
 	return fmt.Sprintf("%x", sum)[:10]
 }
 
-func (g *Group) months() []time.Month {
+// Returns the months between since and until in TimePeriod
+func (tp *TimePeriod) Months() []time.Month {
+	until := tp.Until
+	since := tp.Since
+
+	month := since.Month()
+
 	var months []time.Month
-	var month time.Month
-	for _, r := range g.Records {
-		next := r.Time.Month()
-		if next != month {
-			months = append(months, next)
-			month = next
+	months = append(months, month)
+
+	for since.Before(until) {
+		since = since.Add(time.Hour * 24)
+		nextMonth := since.Month()
+		if nextMonth != month {
+			months = append(months, nextMonth)
 		}
+		month = nextMonth
 	}
 	return months
 }
@@ -146,22 +160,22 @@ func (g *Group) Sum() int64 {
 
 // Budget returns the budget for this group. The budget is multiplied by the number of distinct months found in the
 // record time range.
-func (g *Group) Budget() int64 {
+func (g *Group) Budget(timePeriod TimePeriod) int64 {
 	var budget int64
-	for _, m := range g.months() {
+	for _, m := range timePeriod.Months() {
 		budget += g.budget.Month(m)
 	}
 	return budget
 }
 
 // Balance returns the difference between the budget of this group and its sum.
-func (g *Group) Balance() int64 { return g.Budget() - g.Sum() }
+func (g *Group) Balance(timePeriod TimePeriod) int64 { return g.Budget(timePeriod) - g.Sum() }
 
 // MaxBalance returns the highest balance of the groups in gs.
-func MaxBalance(gs []Group) int64 {
+func MaxBalance(gs []Group, timePeriod TimePeriod) int64 {
 	var max int64
 	for _, rg := range gs {
-		if b := rg.Balance(); b > max {
+		if b := rg.Balance(timePeriod); b > max {
 			max = b
 		}
 	}
@@ -169,10 +183,10 @@ func MaxBalance(gs []Group) int64 {
 }
 
 // MinBalance returns the lowest balance of the groups in gs.
-func MinBalance(gs []Group) int64 {
-	min := MaxBalance(gs)
+func MinBalance(gs []Group, timePeriod TimePeriod) int64 {
+	min := MaxBalance(gs, timePeriod)
 	for _, rg := range gs {
-		if b := rg.Balance(); b < min {
+		if b := rg.Balance(timePeriod); b < min {
 			min = b
 		}
 	}
