@@ -116,9 +116,9 @@ specified as one-hundredth of the currency. `budget = -50000` means a budget of
 *-500,00 NOK* .
 
 When listing records for multiple months, the budget will be multiplied by the
-number of months in the record time range. E.g. with `budget = -50000` and
-records occurring in all months between *2018-05-13* and *2018-07-05*, the total
-budget will be `3 * -50000 = -150000`.
+number of months in the displayed time range. E.g. with `budget = -50000` and `$
+journal ls --since 2018-05-01 --until 2018-07-01`, the total budget will be `3 *
+-50000 = -150000`.
 
 It's also possible to set a custom budget for each month using the `budgets`
 key. The value of `budgets` has to be an array of 12 numbers, one per month. If

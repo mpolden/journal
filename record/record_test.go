@@ -169,11 +169,16 @@ func TestAssortPeriodFunc(t *testing.T) {
 }
 
 func TestGroupMath(t *testing.T) {
+	r := Range{
+		Since: date(2017, 1, 1),
+		Until: date(2017, 1, 1),
+	}
 	var tests = []struct {
 		g       Group
 		sum     int64
 		budget  int64
 		balance int64
+		r       Range
 	}{
 		{Group{ // 0: Sum and balance
 			budget: Budget{Months: [12]int64{500}},
@@ -183,20 +188,22 @@ func TestGroupMath(t *testing.T) {
 				{Amount: 1000},
 			},
 		},
-			1250,  // sum
-			500,   // budget
-			-750}, // balance
-		{Group{ // 1: Budget is multiplied by months in time range
+			1250, // sum
+			500,  // budget
+			-750, // balance
+			r},   // range
+		{Group{ // 1: Budget is multiplied by months between since (inclusive) and until (inclusive)
 			budget: Budget{Months: [12]int64{-500, -500, -500}},
 			Records: []Record{
-				{Time: date(2017, 1, 1), Amount: -500},
-				{Time: date(2017, 1, 2), Amount: 100}, // Repeated month does not affect budget
+				{Time: date(2017, 2, 1), Amount: -500},
+				{Time: date(2017, 2, 2), Amount: 100}, // Repeated month does not affect budget
 				{Time: date(2017, 3, 1), Amount: -100},
 			},
 		},
 			-500,     // sum
-			-500 * 2, // budget
-			-500},    // balance
+			-500 * 3, // budget
+			-1000,    // balance
+			Range{date(2017, 1, 1), date(2017, 3, 1)}}, // range
 		{Group{ // 2: Zero balance is considered balanced
 			budget: Budget{Months: [12]int64{500}},
 			Records: []Record{
@@ -206,7 +213,8 @@ func TestGroupMath(t *testing.T) {
 		},
 			500, // sum
 			500, // budget
-			0},  // balance
+			0,   // balance
+			r},  // range
 		{Group{ // 3: Defaults to default budget
 			budget: Budget{Default: 1000},
 			Records: []Record{
@@ -216,17 +224,30 @@ func TestGroupMath(t *testing.T) {
 		},
 			500,  // sum
 			1000, // budget
-			500}, // balance
+			500,  // balance
+			r},   // range
+		{Group{ // 4: Since after until results in a zero budget
+			budget: Budget{Months: [12]int64{-500, -500, -500}},
+			Records: []Record{
+				{Time: date(2017, 1, 1), Amount: -500},
+				{Time: date(2017, 2, 1), Amount: 100},
+				{Time: date(2017, 3, 1), Amount: -100},
+			},
+		},
+			-500, // sum
+			0,    // budget
+			500,  // balance
+			Range{date(2017, 2, 1), date(2017, 1, 1)}}, // range
 
 	}
 	for i, tt := range tests {
 		if want, got := tt.sum, tt.g.Sum(); want != got {
 			t.Errorf("#%d: want Sum = %d, got %d", i, want, got)
 		}
-		if want, got := tt.budget, tt.g.Budget(); want != got {
+		if want, got := tt.budget, tt.g.Budget(tt.r); want != got {
 			t.Errorf("#%d: want Budget = %d, got %d", i, want, got)
 		}
-		if want, got := tt.balance, tt.g.Balance(); want != got {
+		if want, got := tt.balance, tt.g.Balance(tt.r); want != got {
 			t.Errorf("#%d: want Balance = %d, got %d", i, want, got)
 		}
 	}
@@ -243,8 +264,9 @@ func TestMaxBalance(t *testing.T) {
 			{Records: []Record{{Amount: -5000}, {Amount: -2000}}},
 		}, 8000},
 	}
+	r := Range{date(2017, 1, 1), date(2017, 2, 1)}
 	for i, tt := range tests {
-		if got, want := MaxBalance(tt.gs), tt.max; got != want {
+		if got, want := MaxBalance(tt.gs, r), tt.max; got != want {
 			t.Errorf("#%d: want %d, got %d", i, want, got)
 		}
 	}
@@ -261,8 +283,9 @@ func TestMinBalance(t *testing.T) {
 			{Records: []Record{{Amount: 5000}, {Amount: 2000}}},
 		}, -8000},
 	}
+	r := Range{date(2017, 1, 1), date(2017, 2, 1)}
 	for i, tt := range tests {
-		if got, want := MinBalance(tt.gs), tt.min; got != want {
+		if got, want := MinBalance(tt.gs, r), tt.min; got != want {
 			t.Errorf("#%d: want %d, got %d", i, want, got)
 		}
 	}

@@ -195,7 +195,7 @@ func (l *List) Execute(args []string) error {
 	if l.Explain != "" {
 		l.printAll(rgs, l.Explain, j.FormatAmount, sortField)
 	} else {
-		l.printGroups(rgs, j.FormatAmount, sortField)
+		l.printGroups(rgs, j.FormatAmount, sortField, record.Range{Since: s, Until: u})
 	}
 	return nil
 }
@@ -217,7 +217,7 @@ func (l *List) sortField() (record.Field, error) {
 	return 0, fmt.Errorf("invalid sort field: %q", l.OrderBy)
 }
 
-func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string, sortField record.Field) {
+func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string, sortField record.Field, r record.Range) {
 	table := tablewriter.NewWriter(l.Writer)
 	var rows [][]string
 	headers := []string{"Group", "Records", "Sum", "Budget", "Balance", "Balance bar"}
@@ -237,17 +237,17 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string, sor
 		totalBudget  int64
 	)
 	s := sgr{
-		min:     record.MinBalance(rgs),
-		max:     record.MaxBalance(rgs),
+		min:     record.MinBalance(rgs, r),
+		max:     record.MaxBalance(rgs, r),
 		enabled: l.colorize(),
 	}
 	record.SortGroup(rgs, sortField)
 	for _, rg := range rgs {
 		var (
 			records = len(rg.Records)
-			balance = rg.Balance()
+			balance = rg.Balance(r)
 			sum     = rg.Sum()
-			budget  = rg.Budget()
+			budget  = rg.Budget(r)
 			c, d    = s.color(balance)
 		)
 		totalRecords += records

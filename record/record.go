@@ -63,14 +63,20 @@ type Record struct {
 	Balance int64
 }
 
-// A Group is a list of recordes grouped together under a common name.
+// A Group is a list of records grouped together under a common name.
 type Group struct {
 	Name    string
 	Records []Record
 	budget  Budget
 }
 
-// A Period stores record groups for specific moment in time.
+// A Range represents a record time range.
+type Range struct {
+	Since time.Time
+	Until time.Time
+}
+
+// A Period is a list of record groups occurring at a specific time.
 type Period struct {
 	Time   time.Time
 	Groups []Group
@@ -122,15 +128,12 @@ func (r *Record) ID() string {
 	return fmt.Sprintf("%x", sum)[:10]
 }
 
-func (g *Group) months() []time.Month {
+func (r *Range) months() []time.Month {
 	var months []time.Month
-	var month time.Month
-	for _, r := range g.Records {
-		next := r.Time.Month()
-		if next != month {
-			months = append(months, next)
-			month = next
-		}
+	t := r.Since
+	for !t.After(r.Until) {
+		months = append(months, t.Month())
+		t = t.AddDate(0, 1, 0)
 	}
 	return months
 }
@@ -144,35 +147,37 @@ func (g *Group) Sum() int64 {
 	return sum
 }
 
-// Budget returns the budget for this group. The budget is multiplied by the number of distinct months found in the
-// record time range.
-func (g *Group) Budget() int64 {
+// Budget returns the budget for this group. The budget is adjusted to the number of months in range r.
+func (g *Group) Budget(r Range) int64 {
 	var budget int64
-	for _, m := range g.months() {
+	for _, m := range r.months() {
 		budget += g.budget.Month(m)
 	}
 	return budget
 }
 
-// Balance returns the difference between the budget of this group and its sum.
-func (g *Group) Balance() int64 { return g.Budget() - g.Sum() }
+// Balance returns the difference between the budget of this group and its sum. Balance adjusts the budget using
+// range r in the same way that Budget does.
+func (g *Group) Balance(r Range) int64 { return g.Budget(r) - g.Sum() }
 
-// MaxBalance returns the highest balance of the groups in gs.
-func MaxBalance(gs []Group) int64 {
+// MaxBalance returns the highest balance of the groups in gs. MaxBalance adjusts the budget using range r in the
+// same way that Budget does.
+func MaxBalance(gs []Group, r Range) int64 {
 	var max int64
 	for _, rg := range gs {
-		if b := rg.Balance(); b > max {
+		if b := rg.Balance(r); b > max {
 			max = b
 		}
 	}
 	return max
 }
 
-// MinBalance returns the lowest balance of the groups in gs.
-func MinBalance(gs []Group) int64 {
-	min := MaxBalance(gs)
+// MinBalance returns the lowest balance of the groups in gs. MinBalance adjusts the budget using range r in the
+// same way that Budget does.
+func MinBalance(gs []Group, r Range) int64 {
+	min := MaxBalance(gs, r)
 	for _, rg := range gs {
-		if b := rg.Balance(); b < min {
+		if b := rg.Balance(r); b < min {
 			min = b
 		}
 	}
