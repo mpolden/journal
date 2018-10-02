@@ -31,7 +31,7 @@ type jsonAmount int64
 
 type jsonRecord struct {
 	Time   jsonTime   `json:"FormattedPostingDate"`
-	Amount jsonAmount `json:"FormattedAmount"`
+	Amount jsonAmount `json:"Amount"`
 	Text   string     `json:"DisplayDescription"`
 }
 
@@ -49,12 +49,13 @@ func (t *jsonTime) UnmarshalJSON(data []byte) error {
 }
 
 func (a *jsonAmount) UnmarshalJSON(data []byte) error {
-	s, err := strconv.Unquote(string(data))
-	if err != nil {
-		return err
+	s := string(data)
+	if strings.Contains(s, decimalSeparator) {
+		s = strings.Replace(s, decimalSeparator, "", -1)
+	} else {
+		s += "00"
 	}
-	v := strings.Replace(s, ",", "", -1)
-	n, err := strconv.ParseInt(v, 10, 64)
+	n, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return err
 	}
