@@ -31,7 +31,7 @@ type jsonAmount int64
 
 type jsonRecord struct {
 	Time   jsonTime   `json:"FormattedPostingDate"`
-	Amount jsonAmount `json:"Amount"`
+	Amount jsonAmount `json:"BillingAmount"`
 	Text   string     `json:"DisplayDescription"`
 }
 
