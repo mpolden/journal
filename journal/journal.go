@@ -110,10 +110,8 @@ func readerFrom(r io.Reader, name, filename string) (record.Reader, error) {
 	switch name {
 	case "csv":
 		rr = record.NewReader(r)
-	case "komplett", "komplettsparing":
-		kr := komplett.NewReader(r)
-		kr.JSON = name == "komplettsparing"
-		rr = kr
+	case "komplett":
+		rr = komplett.NewReader(r)
 	case "norwegian":
 		rr = norwegian.NewReader(r)
 	case "auto":
@@ -123,10 +121,8 @@ func readerFrom(r io.Reader, name, filename string) (record.Reader, error) {
 			rr = record.NewReader(r)
 		case ".xlsx":
 			rr = norwegian.NewReader(r)
-		case ".html", ".json":
-			kr := komplett.NewReader(r)
-			kr.JSON = ext == ".json"
-			rr = kr
+		case ".json":
+			rr = komplett.NewReader(r)
 		default:
 			return nil, fmt.Errorf("failed to guess reader for file name: %s", filename)
 		}
@@ -197,8 +193,7 @@ func (j *Journal) FormatAmount(n int64) string {
 	return sb.String()
 }
 
-// ReadFile uses reader to read records from file f. If reader is empty, the reader to use will be guessed from the //
-// file name.
+// ReadFile uses reader to read records from file f.
 func (j *Journal) ReadFile(reader string, f *os.File) ([]record.Record, error) {
 	r, err := readerFrom(f, reader, f.Name())
 	if err != nil {

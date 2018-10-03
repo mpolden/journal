@@ -7,9 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/mpolden/journal/record"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -22,7 +20,6 @@ const (
 type Reader struct {
 	rd       io.Reader
 	replacer *strings.Replacer
-	JSON     bool
 }
 
 type jsonTime time.Time
@@ -71,59 +68,7 @@ func NewReader(rd io.Reader) *Reader {
 	}
 }
 
-func (r *Reader) parseAmount(s string) (int64, error) {
-	v := r.replacer.Replace(s)
-	n, err := strconv.ParseInt(v, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	// Fix inverted sign. This bank records purchases as positive transactions
-	return n * -1, nil
-}
-
 func (r *Reader) Read() ([]record.Record, error) {
-	if r.JSON {
-		return r.readJSON()
-	}
-	return r.readHTML()
-}
-
-func (r *Reader) readHTML() ([]record.Record, error) {
-	doc, err := goquery.NewDocumentFromReader(r.rd)
-	if err != nil {
-		return nil, err
-	}
-	var parseErr error
-	var rs []record.Record
-	doc.Find("tr.smtxt12").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		vs := s.Find("td")
-		timeText := strings.TrimSpace(vs.Eq(0).Text())
-		time, err := time.Parse(timeLayout, timeText)
-		if err != nil {
-			parseErr = errors.Wrapf(err, "invalid time: %q", timeText)
-			return false
-		}
-		text := strings.TrimSpace(vs.Eq(1).Text())
-		amountText := strings.TrimSpace(s.Find("td span.credit-amount").Text())
-		amount, err := r.parseAmount(amountText)
-		if err != nil {
-			parseErr = errors.Wrapf(err, "invalid amount: %q", amountText)
-			return false
-		}
-		rs = append(rs, record.Record{
-			Time:   time,
-			Text:   text,
-			Amount: amount,
-		})
-		return true
-	})
-	if parseErr != nil {
-		return nil, parseErr
-	}
-	return rs, nil
-}
-
-func (r *Reader) readJSON() ([]record.Record, error) {
 	var jrs []jsonRecord
 	if err := json.NewDecoder(r.rd).Decode(&jrs); err != nil {
 		return nil, err

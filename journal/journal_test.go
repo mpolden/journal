@@ -72,11 +72,9 @@ func TestReaderFrom(t *testing.T) {
 		{"csv", "", "default"},
 		{"norwegian", "", "norwegian"},
 		{"komplett", "", "komplett"},
-		{"komplettsparing", "", "komplett-sparing"},
 		{"auto", "foo.csv", "default"},
 		{"auto", "foo.xlsx", "norwegian"},
-		{"auto", "foo.html", "komplett"},
-		{"auto", "foo.json", "komplett-sparing"},
+		{"auto", "foo.json", "komplett"},
 	}
 	for i, tt := range tests {
 		rr, err := readerFrom(r, tt.name, tt.filename)
@@ -92,14 +90,9 @@ func TestReaderFrom(t *testing.T) {
 			if _, ok := rr.(*norwegian.Reader); !ok {
 				t.Errorf("#%d: want norwegian.Reader, got %T", i, rr)
 			}
-		case "komplett", "komplett-sparing":
-			kr, ok := rr.(*komplett.Reader)
-			if !ok {
+		case "komplett":
+			if _, ok := rr.(*komplett.Reader); !ok {
 				t.Errorf("#%d: want komplett.Reader, got %T", i, rr)
-			}
-			want := tt.impl == "komplett-sparing"
-			if kr.JSON != want {
-				t.Errorf("#%d: want JSON = %t, got %t", i, want, kr.JSON)
 			}
 		}
 	}
