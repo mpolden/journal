@@ -203,17 +203,19 @@ Records are grouped together according to configured match groups. If we want to
 understand a record grouping, we can list individual records and their group:
 
 ```
-$ journal ls --explain
-journal: displaying records for all accounts between 2018-07-01 and 2018-07-28
-+---------------+--------------+------------+------------+-----------------------+-----------+---------+
-|    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |         GROUP         |   TEXT    | AMOUNT  |
-+---------------+--------------+------------+------------+-----------------------+-----------+---------+
-| 1234.56.78900 | Example Bank | 77c2a500e1 | 2018-07-05 | Groceries             | Rema 1000 | -750.00 |
-| 1234.56.78900 | Example Bank | 8f864212ce | 2018-07-01 | Groceries             | Rema 1000 | -250.00 |
-| 1234.56.78900 | Example Bank | 2e25c40379 | 2018-07-15 | Public Transportation | Atb       |  -35.00 |
-| 1234.56.78900 | Example Bank | 84ca136809 | 2018-07-07 | Public Transportation | Atb       |  -35.00 |
-| 1234.56.78900 | Example Bank | 5833456f0b | 2018-07-02 | Public Transportation | Atb       |  -35.00 |
-+---------------+--------------+------------+------------+-----------------------+-----------+---------+
+$ journal ls --since=2018-07-01 --until=2018-07-31 --explain
+journal: displaying records for all accounts between 2018-07-01 and 2018-07-31
++---------------+--------------+------------+------------+-----------------------+-----------+----------+
+|    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |         GROUP         |   TEXT    |  AMOUNT  |
++---------------+--------------+------------+------------+-----------------------+-----------+----------+
+| 1234.56.78900 | Example Bank | 77c2a500e1 | 2018-07-05 | Groceries             | Rema 1000 |  -750.00 |
+| 1234.56.78900 | Example Bank | 8f864212ce | 2018-07-01 | Groceries             | Rema 1000 |  -250.00 |
+| 1234.56.78900 | Example Bank | 2e25c40379 | 2018-07-15 | Public Transportation | Atb       |   -35.00 |
+| 1234.56.78900 | Example Bank | 84ca136809 | 2018-07-07 | Public Transportation | Atb       |   -35.00 |
+| 1234.56.78900 | Example Bank | 5833456f0b | 2018-07-02 | Public Transportation | Atb       |   -35.00 |
++---------------+--------------+------------+------------+-----------------------+-----------+----------+
+|                                                                                    TOTAL   | -1105.00 |
++---------------+--------------+------------+------------+-----------------------+-----------+----------+
 ```
 
 If we want show older records, date ranges can be specified using `--since` and
@@ -238,7 +240,7 @@ that contain records.
 Options also be combined:
 ```
 $ journal ls --since=2018-01-01 --explain
-journal: displaying records for all accounts between 2018-01-01 and 2018-07-28
+journal: displaying records for all accounts between 2018-01-01 and 2018-07-31
 +---------------+--------------+------------+------------+-----------------------+-----------+----------+
 |    ACCOUNT    | ACCOUNT NAME |     ID     |    DATE    |         GROUP         |   TEXT    |  AMOUNT  |
 +---------------+--------------+------------+------------+-----------------------+-----------+----------+
@@ -252,6 +254,8 @@ journal: displaying records for all accounts between 2018-01-01 and 2018-07-28
 | 1234.56.78900 | Example Bank | 5833456f0b | 2018-07-02 | Public Transportation | Atb       |   -35.00 |
 | 1234.56.78900 | Example Bank | 2e8e1ac9e1 | 2018-06-15 | Public Transportation | Atb       |   -35.00 |
 | 1234.56.78900 | Example Bank | 84c948c456 | 2018-06-07 | Public Transportation | Atb       |   -35.00 |
++---------------+--------------+------------+------------+-----------------------+-----------+----------+
+|                                                                                    TOTAL   | -3475.00 |
 +---------------+--------------+------------+------------+-----------------------+-----------+----------+
 ```
 

@@ -266,6 +266,10 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string, sor
 		table.Append(row)
 	}
 
+	// Since length of strings containing SGR codes is longer than the display length, we can't use the built-in
+	// footer support in tablewriter. The following code a new table without a top border, strips SGR codes when
+	// calculating column width and renders it after the primary table. This gives the same visual effect as a
+	// footer.
 	footer := tablewriter.NewWriter(l.Writer)
 	footer.SetColumnAlignment(alignments)
 	footer.SetAutoWrapText(false)
@@ -312,11 +316,13 @@ func (l *List) printAll(rgs []record.Group, group string, fmtAmount func(int64) 
 		}
 	}
 	record.Sort(rs, sortField)
+	var sum int64
 	for _, r := range rs {
 		groupName := gs[r.ID()]
 		if group != "all" && group != groupName {
 			continue
 		}
+		sum += r.Amount
 		row := []string{
 			r.Account.Number,
 			r.Account.Name,
@@ -328,6 +334,7 @@ func (l *List) printAll(rgs []record.Group, group string, fmtAmount func(int64) 
 		}
 		table.Append(row)
 	}
+	table.SetFooter([]string{"", "", "", "", "", "Total", fmtAmount(sum)})
 	table.Render()
 }
 
