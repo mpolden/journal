@@ -13,8 +13,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-const timeLayout = "2006-01-02"
-
 // Options represents command line options that are shared across sub-commands.
 type Options struct {
 	Config string `short:"f" long:"config" description:"Config file" value-name:"FILE" default:"~/.journalrc"`
@@ -55,6 +53,7 @@ type List struct {
 	Explain string `short:"e" long:"explain" optional:"yes" optional-value:"all" value-name:"GROUP" description:"Print records in GROUP. Defaults to all groups"`
 	Since   string `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
 	Until   string `short:"u" long:"until" description:"Print records until this date" value-name:"YYYY-MM-DD"`
+	Month   int    `short:"m" long:"month" description:"Print records in this month of the current year" value-name:"M"`
 	OrderBy string `short:"o" long:"order" description:"Print records ordered by a specific field" choice:"sum" choice:"date" choice:"group" choice:"text" default:"sum"`
 	Args    struct {
 		Account string `description:"Only print records for given account number" positional-arg-name:"account-number"`
@@ -72,32 +71,6 @@ func maxLen(column int, rows [][]string) int {
 		}
 	}
 	return max
-}
-
-func parseTime(s string) (time.Time, error) {
-	if s == "" {
-		return time.Time{}, nil
-	}
-	return time.Parse(timeLayout, s)
-}
-
-func timeRange(since, until string) (time.Time, time.Time, error) {
-	now := time.Now()
-	s, err := parseTime(since)
-	if err != nil {
-		return time.Time{}, time.Time{}, err
-	}
-	u, err := parseTime(until)
-	if err != nil {
-		return time.Time{}, time.Time{}, err
-	}
-	if s.IsZero() { // Default to start of month
-		s = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	}
-	if u.IsZero() {
-		u = now
-	}
-	return s, u, nil
 }
 
 // Execute imports records into the journal from a file.
@@ -165,7 +138,17 @@ func (l *List) Execute(args []string) error {
 		return err
 	}
 
-	s, u, err := timeRange(l.Since, l.Until)
+	clock := newClock()
+	var s, u time.Time
+	if l.Month != 0 {
+		if l.Since != "" || l.Until != "" {
+			return fmt.Errorf("--month cannot be combined with --since or --until")
+		}
+		s, u, err = clock.monthRange(l.Month)
+	} else {
+		s, u, err = clock.timeRange(l.Since, l.Until)
+
+	}
 	if err != nil {
 		return err
 	}
@@ -345,7 +328,8 @@ func (e *Export) Execute(args []string) error {
 		return err
 	}
 
-	s, u, err := timeRange(e.Since, e.Until)
+	clock := newClock()
+	s, u, err := clock.timeRange(e.Since, e.Until)
 	if err != nil {
 		return err
 	}

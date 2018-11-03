@@ -161,6 +161,31 @@ func TestList(t *testing.T) {
 	}
 }
 
+func TestListTimeRange(t *testing.T) {
+	f := testFiles(t)
+	defer f.removeAll()
+	importFile(t, f, ioutil.Discard, ioutil.Discard)
+
+	var stdout, stderr bytes.Buffer
+	ls := List{
+		Options: Options{Config: f.conf, Writer: &stdout, Log: NewLogger(&stderr), Color: "never"},
+		Since:   "2017-01-01",
+		Until:   "2017-01-31",
+		Month:   3,
+	}
+
+	want := "--month cannot be combined with --since or --until"
+	if err := ls.Execute(nil); err == nil || err.Error() != want {
+		t.Errorf("want error %q, got %q", want, err)
+	}
+
+	ls.Since = ""
+	ls.Until = ""
+	if err := ls.Execute(nil); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestAccounts(t *testing.T) {
 	f := testFiles(t)
 	defer f.removeAll()
