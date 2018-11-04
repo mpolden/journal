@@ -23,7 +23,7 @@ func (c *clock) monthRange(month int) (time.Time, time.Time, error) {
 	if month < 1 || month > 12 {
 		return time.Time{}, time.Time{}, fmt.Errorf("invalid month: %d", month)
 	}
-	s := time.Date(now.Year(), time.Month(month), 1, 0, 0, 0, 0, now.Location())
+	s := time.Date(now.Year(), time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 	u := s.AddDate(0, 1, -1)
 	return s, u, nil
 }
@@ -39,7 +39,7 @@ func (c *clock) timeRange(since, until string) (time.Time, time.Time, error) {
 		return time.Time{}, time.Time{}, err
 	}
 	if s.IsZero() { // Default to start of month
-		s = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		s = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 	}
 	if u.IsZero() {
 		u = now

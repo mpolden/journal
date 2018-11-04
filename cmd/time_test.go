@@ -51,10 +51,16 @@ func TestMonthRange(t *testing.T) {
 			t.Errorf("got unexpected error for %q: %s", tt.in, err)
 		}
 		if !tt.s.Equal(s) {
-			t.Errorf("got Since=%q, want %q", s, tt.s)
+			t.Errorf("got s=%s, want %s", s, tt.s)
 		}
 		if !tt.u.Equal(u) {
-			t.Errorf("got Until=%q, want %q", u, tt.u)
+			t.Errorf("got u=%s, want %s", u, tt.u)
+		}
+		if got, want := s.Location(), time.UTC; want != got {
+			t.Errorf("got s.Location=%s, want %s", got, want)
+		}
+		if got, want := u.Location(), time.UTC; want != got {
+			t.Errorf("got u.Location=%s, want %s", got, want)
 		}
 	}
 }
@@ -73,13 +79,19 @@ func TestTimeRange(t *testing.T) {
 	for _, tt := range tests {
 		s, u, err := testClock.timeRange(tt.since, tt.until)
 		if err != nil {
-			t.Errorf("got unexpected error for Since=%q Until=%q: %s", tt.since, tt.until, err)
+			t.Errorf("got error for s=%s u=%s: %s", tt.since, tt.until, err)
 		}
 		if !tt.s.Equal(s) {
-			t.Errorf("got Since=%q, want %q", s, tt.s)
+			t.Errorf("got s=%s, want %s", s, tt.s)
 		}
 		if !tt.u.Equal(u) {
-			t.Errorf("got Until=%q, want %q", u, tt.u)
+			t.Errorf("got u=%s, want %s", u, tt.u)
+		}
+		if got, want := s.Location(), time.UTC; want != got {
+			t.Errorf("got s.Location=%s, want %s", got, want)
+		}
+		if got, want := u.Location(), time.UTC; want != got {
+			t.Errorf("got u.Location=%s, want %s", got, want)
 		}
 	}
 }
