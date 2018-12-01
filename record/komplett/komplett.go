@@ -46,9 +46,13 @@ func (t *jsonTime) UnmarshalJSON(data []byte) error {
 }
 
 func (a *jsonAmount) UnmarshalJSON(data []byte) error {
-	s := string(data)
-	if strings.Contains(s, decimalSeparator) {
-		s = strings.Replace(s, decimalSeparator, "", -1)
+	parts := strings.Split(string(data), decimalSeparator)
+	s := parts[0]
+	if len(parts) == 2 {
+		s += parts[1]
+		if len(parts[1]) == 1 {
+			s += "0"
+		}
 	} else {
 		s += "00"
 	}

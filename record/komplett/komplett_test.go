@@ -43,6 +43,7 @@ func TestRead(t *testing.T) {
 		{date(2017, 9, 1), "Innskudd / Ekstra avdrag", 4242},
 		{date(2017, 8, 1), "Innskudd / Ekstra avdrag", 133700},
 		{date(2018, 9, 1), "Varekjøp", -50000},
+		{date(2018, 12, 1), "Varekjøp", -99740},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))
