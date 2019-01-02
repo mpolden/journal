@@ -24,6 +24,10 @@ func (c *clock) monthRange(month int) (time.Time, time.Time, error) {
 		return time.Time{}, time.Time{}, fmt.Errorf("invalid month: %d", month)
 	}
 	s := time.Date(now.Year(), time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+	if month > int(now.Month()) {
+		// Given month has not passed yet, so use previous year
+		s = s.AddDate(-1, 0, 0)
+	}
 	u := s.AddDate(0, 1, -1)
 	return s, u, nil
 }

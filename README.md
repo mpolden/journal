@@ -237,10 +237,13 @@ journal: displaying records for all accounts between 2018-06-01 and 2018-07-31
 Note that the budget has been automatically adjusted to the number of months
 that contain records.
 
-The option `--month` can be used to show records for a given month in the
-current year. `journal ls --month=7` is equivalent to `journal ls
---since=2018-07-01 --until=2018-07-31` where `2018` is substituted for the
-current calendar year.
+The option `--month` can be used to show records for the most recent month.
+`journal ls --month=7` is equivalent to `journal ls --since=2018-07-01
+--until=2018-07-31` where `2018` is substituted for the current calendar year.
+
+If the given month is after the current month, records from the previous year
+are displayed instead. E.g. if the current date is in January 2019, `journal ls
+--month=3` is equivalent to `journal ls --since=2018-03-01 --until=2018-03-31`.
 
 Options also be combined:
 ```

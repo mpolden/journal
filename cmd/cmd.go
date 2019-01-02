@@ -250,8 +250,8 @@ func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string, sor
 	}
 
 	// Since length of strings containing SGR codes is longer than the display length, we can't use the built-in
-	// footer support in tablewriter. The following code a new table without a top border, strips SGR codes when
-	// calculating column width and renders it after the primary table. This gives the same visual effect as a
+	// footer support in tablewriter. The following code creates a new table without a top border, strips SGR codes
+	// when calculating column width and renders it after the primary table. This gives the same visual effect as a
 	// footer.
 	footer := tablewriter.NewWriter(l.Writer)
 	footer.SetColumnAlignment(alignments)
