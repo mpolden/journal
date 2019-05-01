@@ -50,12 +50,13 @@ type Accounts struct {
 // List represents options for the export sub-command.
 type List struct {
 	Options
-	Explain string `short:"e" long:"explain" optional:"yes" optional-value:"all" value-name:"GROUP" description:"Print records in GROUP. Defaults to all groups"`
-	Since   string `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
-	Until   string `short:"u" long:"until" description:"Print records until this date" value-name:"YYYY-MM-DD"`
-	Month   int    `short:"m" long:"month" description:"Print records in this month of the current year" value-name:"M"`
-	OrderBy string `short:"o" long:"order" description:"Print records ordered by a specific field" choice:"sum" choice:"date" choice:"group" choice:"text" default:"sum"`
-	Args    struct {
+	Explain    string   `short:"e" long:"explain" optional:"yes" optional-value:"all" value-name:"GROUP" description:"Print records in GROUP. Defaults to all groups"`
+	Since      string   `short:"s" long:"since" description:"Print records since this date" value-name:"YYYY-MM-DD"`
+	Until      string   `short:"u" long:"until" description:"Print records until this date" value-name:"YYYY-MM-DD"`
+	Month      int      `short:"m" long:"month" description:"Print records in this month of the current year" value-name:"M"`
+	OrderBy    string   `short:"o" long:"order" description:"Print records ordered by a specific field" choice:"sum" choice:"date" choice:"group" choice:"text" default:"sum"`
+	HideGroups []string `short:"H" long:"hide" description:"Hide group by name" value-name:"NAME"`
+	Args       struct {
 		Account string `description:"Only print records for given account number" positional-arg-name:"account-number"`
 	} `positional-args:"yes"`
 }
@@ -201,6 +202,19 @@ func (l *List) sortField() (record.Field, error) {
 }
 
 func (l *List) printGroups(rgs []record.Group, fmtAmount func(int64) string, sortField record.Field, r record.Range) {
+	if len(l.HideGroups) > 0 && len(rgs) > 0 {
+		var filtered []record.Group
+	filter:
+		for _, rg := range rgs {
+			for _, hideGroup := range l.HideGroups {
+				if rg.Name == hideGroup {
+					continue filter
+				}
+			}
+			filtered = append(filtered, rg)
+		}
+		rgs = filtered
+	}
 	table := tablewriter.NewWriter(l.Writer)
 	var rows [][]string
 	headers := []string{"Group", "Records", "Sum", "Budget", "Balance", "Balance bar"}
