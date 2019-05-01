@@ -71,6 +71,13 @@ func importFile(t *testing.T, f files, stdout, stderr io.Writer) {
 	}
 }
 
+func testString(t *testing.T, got, want string) {
+	if want != got {
+		fmt.Println(got)
+		t.Errorf("want %q, got %q", want, got)
+	}
+}
+
 func TestImport(t *testing.T) {
 	f := testFiles(t)
 	defer f.removeAll()
@@ -83,13 +90,8 @@ journal: created 1 new account(s)
 journal: imported 3 new record(s) out of 3 total
 `, f.data)
 
-	if got := stderr.String(); want != got {
-		t.Errorf("want %q, got %q", want, got)
-	}
-
-	if want, got := "", stdout.String(); want != got {
-		t.Errorf("want %q, got %q", want, got)
-	}
+	testString(t, stderr.String(), want)
+	testString(t, stdout.String(), "")
 }
 
 func TestExport(t *testing.T) {
@@ -111,9 +113,7 @@ func TestExport(t *testing.T) {
 2017-03,B,-42.00
 2017-02,A,1337.00
 `
-	if got := stdout.String(); got != want {
-		t.Errorf("want %q, got %q", want, got)
-	}
+	testString(t, stdout.String(), want)
 }
 
 func TestList(t *testing.T) {
@@ -139,10 +139,7 @@ func TestList(t *testing.T) {
 | Total |       3 | 1337.00 |   0.00 | -1337.00 | ----------------               |
 +-------+---------+---------+--------+----------+--------------------------------+
 `
-	if got := stdout.String(); want != got {
-		fmt.Println(got)
-		t.Errorf("want %q, got %q", want, got)
-	}
+	testString(t, stdout.String(), want)
 }
 
 func TestListExplain(t *testing.T) {
@@ -170,10 +167,7 @@ func TestListExplain(t *testing.T) {
 |                                                                      TOTAL     | 1337.00 |
 +---------------+--------------+------------+------------+-------+---------------+---------+
 `
-	if got := stdout.String(); want != got {
-		fmt.Println(got)
-		t.Errorf("want %q, got %q", want, got)
-	}
+	testString(t, stdout.String(), want)
 }
 
 func TestListHideGroups(t *testing.T) {
@@ -199,18 +193,11 @@ func TestListHideGroups(t *testing.T) {
 | Total |       1 | 1337.00 |   0.00 | -1337.00 | ----------------               |
 +-------+---------+---------+--------+----------+--------------------------------+
 `
-	if got := stdout.String(); want != got {
-		fmt.Println(got)
-		t.Errorf("want %q, got %q", want, got)
-	}
+	testString(t, stdout.String(), want)
 
 	ls.HideGroups = []string{"A", "B"}
 	stdout.Reset()
-	want = ""
-	if got := stdout.String(); want != got {
-		fmt.Println(got)
-		t.Errorf("want %q, got %q", want, got)
-	}
+	testString(t, stdout.String(), "")
 }
 
 func TestListTimeRange(t *testing.T) {
@@ -257,8 +244,5 @@ func TestAccounts(t *testing.T) {
 | 1234.56.78900 | My account 1 |       3 |
 +---------------+--------------+---------+
 `
-	if got := stdout.String(); want != got {
-		fmt.Println(got)
-		t.Errorf("want %q, got %q", want, got)
-	}
+	testString(t, stdout.String(), want)
 }
