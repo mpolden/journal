@@ -56,6 +56,7 @@ type List struct {
 	Month      int      `short:"m" long:"month" description:"Print records in this month of the current year" value-name:"M"`
 	OrderBy    string   `short:"o" long:"order" description:"Print records ordered by a specific field" choice:"sum" choice:"date" choice:"group" choice:"text" default:"sum"`
 	HideGroups []string `short:"H" long:"hide" description:"Hide group by name" value-name:"NAME"`
+	All        bool     `short:"a" long:"all" description:"Show records that would otherwise be discarded by group config"`
 	Args       struct {
 		Account string `description:"Only print records for given account number" positional-arg-name:"account-number"`
 	} `positional-args:"yes"`
@@ -139,6 +140,7 @@ func (l *List) Execute(args []string) error {
 		return err
 	}
 
+	j.Discarding = !l.All
 	clock := newClock()
 	var s, u time.Time
 	if l.Month != 0 {

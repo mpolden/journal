@@ -53,6 +53,7 @@ type Journal struct {
 	db           *sql.Client
 	Comma        string
 	DefaultGroup string
+	Discarding   bool
 }
 
 // Writes represents statistics of a journal's updates.
@@ -173,6 +174,7 @@ func New(conf Config) (*Journal, error) {
 		groups:       conf.Groups,
 		Comma:        comma,
 		DefaultGroup: defaultGroup,
+		Discarding:   true,
 	}, nil
 }
 
@@ -296,7 +298,7 @@ func (j *Journal) findGroup(r record.Record) *record.Group {
 			if r.ID() != id {
 				continue
 			}
-			if g.Discard {
+			if j.Discarding && g.Discard {
 				return nil
 			}
 			rg := record.NewGroup(g.Name, record.Budget{
@@ -315,7 +317,7 @@ func (j *Journal) findGroup(r record.Record) *record.Group {
 			if !p.MatchString(r.Text) {
 				continue
 			}
-			if g.Discard {
+			if j.Discarding && g.Discard {
 				return nil
 			}
 			rg := record.NewGroup(g.Name, record.Budget{
