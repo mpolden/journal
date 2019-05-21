@@ -12,7 +12,7 @@ vet: deps
 golint: deps
 ifdef TRAVIS
 	golint 2> /dev/null; if [ $$? -eq 127 ]; then \
-		go get -v github.com/golang/lint/golint; \
+		go get -v golang.org/x/lint; \
 	fi
 	golint ./...
 endif
