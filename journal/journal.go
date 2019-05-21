@@ -184,7 +184,7 @@ func (j *Journal) FormatAmount(n int64) string {
 	f := n % 100
 	var sb strings.Builder
 	if f < 0 {
-		f *= -1
+		f = -f
 		if i == 0 {
 			sb.WriteRune('-')
 		}
