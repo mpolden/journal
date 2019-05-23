@@ -12,7 +12,7 @@ vet: deps
 golint: deps
 ifdef TRAVIS
 	golint 2> /dev/null; if [ $$? -eq 127 ]; then \
-		go get -v golang.org/x/lint; \
+		GO111MODULE=off go get -v golang.org/x/lint/golint; \
 	fi
 	golint ./...
 endif
