@@ -14,9 +14,10 @@ const (
 	decimalSeparator  = "."
 	thousandSeparator = " "
 	timeLayout        = "02.01.2006"
+	withdrawalPrefix  = "kr -"
 )
 
-// Reader implements a reader for Komplett-encoded (HTML or JSON) records.
+// Reader implements a reader for Komplett-encoded (JSON) records.
 type Reader struct {
 	rd       io.Reader
 	replacer *strings.Replacer
@@ -27,9 +28,11 @@ type jsonTime time.Time
 type jsonAmount int64
 
 type jsonRecord struct {
-	Time   jsonTime   `json:"FormattedPostingDate"`
-	Amount jsonAmount `json:"BillingAmount"`
-	Text   string     `json:"DisplayDescription"`
+	Time            jsonTime   `json:"FormattedPostingDate"`
+	BillingAmount   jsonAmount `json:"BillingAmount"`
+	Amount          jsonAmount `json:"Amount"`
+	FormattedAmount string     `json:"FormattedAmount"`
+	Text            string     `json:"DisplayDescription"`
 }
 
 func (t *jsonTime) UnmarshalJSON(data []byte) error {
@@ -79,10 +82,19 @@ func (r *Reader) Read() ([]record.Record, error) {
 	}
 	var rs []record.Record
 	for _, jr := range jrs {
+		amount := jr.BillingAmount
+		if amount == 0 { // New format
+			amount = jr.Amount
+			// New format does not indicate whether transaction amount is positive or negative, so we guess
+			// based on the formatted field.
+			if strings.HasPrefix(jr.FormattedAmount, withdrawalPrefix) {
+				amount = -amount
+			}
+		}
 		rs = append(rs, record.Record{
 			Time:   time.Time(jr.Time),
 			Text:   jr.Text,
-			Amount: int64(jr.Amount),
+			Amount: int64(amount),
 		})
 	}
 	return rs, nil
