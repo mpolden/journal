@@ -8,7 +8,6 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/mattn/go-sqlite3 v1.13.0
 	github.com/olekukonko/tablewriter v0.0.4
-	github.com/pkg/errors v0.8.0
 	github.com/tealeg/xlsx v1.0.5
 	google.golang.org/appengine v1.1.0 // indirect
 )

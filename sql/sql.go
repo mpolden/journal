@@ -2,12 +2,12 @@ package sql
 
 import (
 	"database/sql"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3" // SQLite database driver
-	"github.com/pkg/errors"
 )
 
 const schema = `
@@ -140,7 +140,7 @@ func (c *Client) AddRecords(accountNumber string, records []Record) (int64, erro
 
 	accountID := 0
 	if err := tx.Get(&accountID, "SELECT id FROM account WHERE number = $1 LIMIT 1", accountNumber); err != nil {
-		return 0, errors.Wrapf(err, "invalid account: %s", accountNumber)
+		return 0, fmt.Errorf("invalid account: %s: %w", accountNumber, err)
 	}
 
 	query := `

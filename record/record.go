@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Field identifies a record field.
@@ -290,18 +288,18 @@ func (r *reader) Read() ([]Record, error) {
 		}
 		t, err := time.Parse("02.01.2006", record[0])
 		if err != nil {
-			return nil, errors.Wrapf(err, "invalid time on line %d: %q", line, record[0])
+			return nil, fmt.Errorf("invalid time on line %d: %q: %w", line, record[0], err)
 		}
 		text := record[2]
 		amount, err := r.parseAmount(record[3])
 		if err != nil {
-			return nil, errors.Wrapf(err, "invalid amount on line %d: %q", line, record[3])
+			return nil, fmt.Errorf("invalid amount on line %d: %q: %w", line, record[3], err)
 		}
 		var balance int64
 		if record[4] != "" {
 			balance, err = r.parseAmount(record[4])
 			if err != nil {
-				return nil, errors.Wrapf(err, "invalid balance on line %d: %q", line, record[4])
+				return nil, fmt.Errorf("invalid balance on line %d: %q: %w", line, record[4], err)
 			}
 		}
 		rs = append(rs, Record{Time: t, Text: text, Amount: amount, Balance: balance})

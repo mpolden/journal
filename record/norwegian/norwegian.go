@@ -1,6 +1,7 @@
 package norwegian
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"strconv"
@@ -8,7 +9,6 @@ import (
 	"time"
 
 	"github.com/mpolden/journal/record"
-	"github.com/pkg/errors"
 	"github.com/tealeg/xlsx"
 )
 
@@ -58,7 +58,7 @@ func (r *Reader) Read() ([]record.Record, error) {
 		return nil, err
 	}
 	if len(f.Sheets) == 0 {
-		return nil, errors.New("xlsx contains 0 sheets")
+		return nil, fmt.Errorf("xlsx contains 0 sheets")
 	}
 	var rs []record.Record
 	for _, row := range f.Sheets[0].Rows {
@@ -74,11 +74,11 @@ func (r *Reader) Read() ([]record.Record, error) {
 		}
 		time, err := time.Parse("01-02-06", cells[0].String())
 		if err != nil {
-			return nil, errors.Wrapf(err, "invalid date: %q", cells[0].String())
+			return nil, fmt.Errorf("invalid date: %q: %w", cells[0].String(), err)
 		}
 		amount, err := r.parseAmount(cells[6].String())
 		if err != nil {
-			return nil, errors.Wrapf(err, "invalid amount: %q", cells[6].String())
+			return nil, fmt.Errorf("invalid amount: %q: %w", cells[6].String(), err)
 		}
 		t := record.Record{
 			Time:   time,
