@@ -14,16 +14,17 @@ golint: install-tools
 	golint ./...
 
 staticcheck: install-tools
-	staticcheck ./...
+# Disable SA5008 because cmd packages has a duplicate "choice" tag
+	staticcheck -checks inherit,-SA5008 ./...
 
 install-tools:
 	cd tools && \
 		go list -tags tools -f '{{range $$i := .Imports}}{{printf "%s\n" $$i}}{{end}}' | xargs go install
 
-check-fmt:
+fmt:
 	bash -c "diff --line-format='%L' <(echo -n) <(gofmt -d -s .)"
 
-lint: check-fmt vet golint
+lint: fmt vet golint staticcheck
 
 install:
 	go install ./...
