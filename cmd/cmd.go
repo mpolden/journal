@@ -25,7 +25,7 @@ type Options struct {
 // Import represents options for the import sub-command.
 type Import struct {
 	Options
-	Reader string `short:"r" long:"reader" description:"Name of reader to use when importing data" choice:"csv" choice:"komplett" choice:"norwegian" choice:"auto" default:"auto"`
+	Reader string `short:"r" long:"reader" description:"Name of reader to use when importing data" choice:"csv" choice:"komplett" choice:"norwegian" choice:"dnb" choice:"auto" default:"auto"`
 	Args   struct {
 		Account string   `description:"Account number" positional-arg-name:"account-number"`
 		Files   []string `description:"File containing records to import" positional-arg-name:"import-file"`

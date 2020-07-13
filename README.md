@@ -7,7 +7,7 @@
 ## Features
 
 * Import financial records from multiple Norwegian banks, such as Eika Group
-(most local banks), Storebrand, Bank Norwegian and Komplett Bank.
+(most local banks), DNB, Storebrand, Bank Norwegian and Komplett Bank.
 * Identify spending habits using automatic grouping of records.
 * Define budgets for record groups.
 * Export record groups for further processing in other programs.
