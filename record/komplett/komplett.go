@@ -16,8 +16,6 @@ const (
 	timeLayout        = "02.01.2006"
 )
 
-var withdrawalPrefixes = []string{"kr -", "kr\u00a0-"}
-
 // Reader implements a reader for Komplett-encoded (JSON) records.
 type Reader struct {
 	rd       io.Reader
@@ -85,13 +83,18 @@ func (r *Reader) Read() ([]record.Record, error) {
 	for _, jr := range jrs {
 		amount := jr.BillingAmount
 		if amount == 0 { // New format
-			amount = jr.Amount
-			// New format does not indicate whether transaction amount is positive or negative, so we guess
-			// based on the formatted field.
-			for _, withdrawalPrefix := range withdrawalPrefixes {
-				if strings.HasPrefix(jr.FormattedAmount, withdrawalPrefix) {
-					amount = -amount
+			var b strings.Builder
+			for _, r := range jr.FormattedAmount {
+				if r == '-' {
+					b.WriteRune(r)
+				} else if r >= '0' && r <= '9' {
+					b.WriteRune(r)
 				}
+			}
+			if n, err := strconv.ParseInt(b.String(), 10, 64); err == nil {
+				amount = jsonAmount(n)
+			} else {
+				return nil, err
 			}
 		}
 		rs = append(rs, record.Record{

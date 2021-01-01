@@ -43,5 +43,20 @@
     "FormattedAmount": "kr -99,00",
     "FormattedPostingDate": "14.12.2020",
     "FormattedDefermentExpiryDate": null
+  },
+  {
+    "TransactionId": null,
+    "TransactionRef": null,
+    "DisplayDescription": "Varekjøp (5,00 EUR / Kurs 10,74000)",
+    "EventNarrative": "",
+    "DestinationAccountNumber": null,
+    "Amount": 5.0,
+    "PostingDate": "/Date(1609110000000)/",
+    "CanDefer": false,
+    "IsDeferred": false,
+    "DefermentPeriod": null,
+    "FormattedAmount": "kr -53,70",
+    "FormattedPostingDate": "28.12.2020",
+    "FormattedDefermentExpiryDate": null
   }
 ]
