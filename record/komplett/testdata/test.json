@@ -28,5 +28,20 @@
     "FormattedAmount": "kr 60,00",
     "FormattedPostingDate": "30.10.2019",
     "FormattedDefermentExpiryDate": null
+  },
+  {
+    "TransactionId": null,
+    "TransactionRef": null,
+    "DisplayDescription": "Varekjøp",
+    "EventNarrative": "",
+    "DestinationAccountNumber": null,
+    "Amount": 99.0,
+    "PostingDate": "/Date(1607900400000)/",
+    "CanDefer": false,
+    "IsDeferred": false,
+    "DefermentPeriod": null,
+    "FormattedAmount": "kr -99,00",
+    "FormattedPostingDate": "14.12.2020",
+    "FormattedDefermentExpiryDate": null
   }
 ]
