@@ -1,6 +1,6 @@
 # journal
 
-[![Build Status](https://travis-ci.org/mpolden/journal.svg)](https://travis-ci.org/mpolden/journal)
+![Build Status](https://github.com/mpolden/journal/workflows/ci/badge.svg)
 
 `journal` is a program for storing and displaying financial records.
 
