@@ -10,21 +10,15 @@ test:
 vet:
 	go vet ./...
 
-golint: install-tools
-	golint ./...
-
-staticcheck: install-tools
-# Disable SA5008 because cmd packages has a duplicate "choice" tag
-	staticcheck -checks inherit,-SA5008 ./...
-
-install-tools:
-	cd tools && \
-		go list -tags tools -f '{{range $$i := .Imports}}{{printf "%s\n" $$i}}{{end}}' | xargs go install
+# https://github.com/golang/go/issues/25922
+# https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module
+tools:
+	go generate -tags tools ./...
 
 fmt:
 	bash -c "diff --line-format='%L' <(echo -n) <(gofmt -d -s .)"
 
-lint: fmt vet golint staticcheck
+lint: fmt vet tools
 
 install:
 	go install ./...
