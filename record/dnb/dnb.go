@@ -71,6 +71,9 @@ func (r *Reader) Read() ([]record.Record, error) {
 		if cells[0].String() == firstHeaderCell { // Header row
 			continue
 		}
+		if cells[0].String() == "" { // Missing date
+			continue
+		}
 		time, err := cells[0].GetTime(false)
 		if err != nil {
 			return nil, err
