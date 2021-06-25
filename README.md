@@ -20,7 +20,7 @@ Building and installing `journal` requires the [Golang
 compiler](https://golang.org/). With Go installed, `journal` can be installed
 with:
 
-`go get github.com/mpolden/journal/...`
+`go install github.com/mpolden/journal/...@latest`
 
 This will build and install `journal` in `$GOPATH/bin/journal`.
 
