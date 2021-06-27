@@ -3,13 +3,12 @@ package norwegian
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/mpolden/journal/record"
-	"github.com/tealeg/xlsx"
 )
 
 const (
@@ -49,40 +48,40 @@ func (r *Reader) parseAmount(s string) (int64, error) {
 }
 
 func (r *Reader) Read() ([]record.Record, error) {
-	data, err := ioutil.ReadAll(r.rd)
+	data, err := excelize.OpenReader(r.rd)
 	if err != nil {
 		return nil, err
 	}
-	f, err := xlsx.OpenBinary(data)
-	if err != nil {
-		return nil, err
-	}
-	if len(f.Sheets) == 0 {
+	if len(data.GetSheetList()) == 0 {
 		return nil, fmt.Errorf("xlsx contains 0 sheets")
 	}
+	firstSheet := data.GetSheetName(0)
+	rows, err := data.GetRows(firstSheet)
+	if err != nil {
+		return nil, err
+	}
 	var rs []record.Record
-	for _, row := range f.Sheets[0].Rows {
-		cells := row.Cells
+	for _, cells := range rows {
 		if len(cells) < 7 {
 			continue
 		}
-		if cells[0].String() == firstHeaderCell { // Header row
+		if cells[0] == firstHeaderCell { // Header row
 			continue
 		}
-		if cells[0].String() == "" { // Empty row
+		if cells[0] == "" { // Empty row
 			continue
 		}
-		time, err := time.Parse("01-02-06", cells[0].String())
+		time, err := time.Parse("01-02-06", cells[0])
 		if err != nil {
-			return nil, fmt.Errorf("invalid date: %q: %w", cells[0].String(), err)
+			return nil, fmt.Errorf("invalid date: %q: %w", cells[0], err)
 		}
-		amount, err := r.parseAmount(cells[6].String())
+		amount, err := r.parseAmount(cells[6])
 		if err != nil {
-			return nil, fmt.Errorf("invalid amount: %q: %w", cells[6].String(), err)
+			return nil, fmt.Errorf("invalid amount: %q: %w", cells[6], err)
 		}
 		t := record.Record{
 			Time:   time,
-			Text:   cells[1].String(),
+			Text:   cells[1],
 			Amount: amount,
 		}
 		rs = append(rs, t)

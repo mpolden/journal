@@ -30,9 +30,9 @@ func TestRead(t *testing.T) {
 		text   string
 		amount int64
 	}{
-		{time.Date(2020, 6, 25, 2, 0, 0, 209, time.UTC), "Transaction 1", -119990},
-		{time.Date(2020, 6, 26, 2, 0, 0, 209, time.UTC), "Transaction 2", -59995},
-		{time.Date(2020, 6, 27, 2, 0, 0, 209, time.UTC), "Transaction 3", 70000},
+		{time.Date(2020, 6, 25, 0, 0, 0, 0, time.UTC), "Transaction 1", -119990},
+		{time.Date(2020, 6, 26, 0, 0, 0, 0, time.UTC), "Transaction 2", -59995},
+		{time.Date(2020, 6, 27, 0, 0, 0, 0, time.UTC), "Transaction 3", 70000},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))

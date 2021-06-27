@@ -3,12 +3,12 @@ package dnb
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/mpolden/journal/record"
-	"github.com/tealeg/xlsx"
 )
 
 const (
@@ -51,45 +51,45 @@ func (r *Reader) parseAmount(s string) (int64, error) {
 }
 
 func (r *Reader) Read() ([]record.Record, error) {
-	data, err := ioutil.ReadAll(r.rd)
+	data, err := excelize.OpenReader(r.rd)
 	if err != nil {
 		return nil, err
 	}
-	f, err := xlsx.OpenBinary(data)
-	if err != nil {
-		return nil, err
-	}
-	if len(f.Sheets) == 0 {
+	if len(data.GetSheetList()) == 0 {
 		return nil, fmt.Errorf("xlsx contains 0 sheets")
 	}
+	firstSheet := data.GetSheetName(0)
+	rows, err := data.GetRows(firstSheet)
+	if err != nil {
+		return nil, err
+	}
 	var rs []record.Record
-	for _, row := range f.Sheets[0].Rows {
-		cells := row.Cells
+	for _, cells := range rows {
 		if len(cells) < 6 {
 			continue
 		}
-		if cells[0].String() == firstHeaderCell { // Header row
+		if cells[0] == firstHeaderCell { // Header row
 			continue
 		}
-		if cells[0].String() == "" { // Missing date
+		if cells[0] == "" { // Missing date
 			continue
 		}
-		time, err := cells[0].GetTime(false)
+		time, err := time.Parse(`"02".01."2006"`, cells[0])
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid date: %q: %w", cells[0], err)
 		}
-		amountIn, err := r.parseAmount(cells[4].String())
+		amountIn, err := r.parseAmount(cells[4])
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid amount: %q: %w", cells[4], err)
 		}
-		amountOut, err := r.parseAmount(cells[5].String())
+		amountOut, err := r.parseAmount(cells[5])
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid amount: %q: %w", cells[5], err)
 		}
 		amount := amountIn - amountOut
 		r := record.Record{
 			Time:   time,
-			Text:   cells[1].String(),
+			Text:   cells[1],
 			Amount: amount,
 		}
 		rs = append(rs, r)
