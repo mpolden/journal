@@ -74,7 +74,7 @@ func (r *Reader) Read() ([]record.Record, error) {
 		if cells[0] == "" { // Missing date
 			continue
 		}
-		time, err := time.Parse(`"02".01."2006"`, cells[0])
+		time, err := time.Parse("02.01.2006", cells[0])
 		if err != nil {
 			return nil, fmt.Errorf("invalid date: %q: %w", cells[0], err)
 		}
