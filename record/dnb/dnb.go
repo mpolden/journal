@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/mpolden/journal/record"
+	"github.com/xuri/excelize/v2"
 )
 
 const (
