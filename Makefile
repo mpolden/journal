@@ -10,15 +10,10 @@ test:
 vet:
 	go vet ./...
 
-# https://github.com/golang/go/issues/25922
-# https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module
-tools:
-	go generate -tags tools ./...
-
 fmt:
 	bash -c "diff --line-format='%L' <(echo -n) <(gofmt -d -s .)"
 
-lint: fmt vet tools
+lint: fmt vet
 
 install:
 	go install ./...

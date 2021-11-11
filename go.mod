@@ -9,5 +9,4 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/olekukonko/tablewriter v0.0.4
-	honnef.co/go/tools v0.1.2
 )
