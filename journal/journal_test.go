@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/mpolden/journal/record"
+	"github.com/mpolden/journal/record/bulder"
 	"github.com/mpolden/journal/record/dnb"
 	"github.com/mpolden/journal/record/komplett"
 	"github.com/mpolden/journal/record/norwegian"
@@ -70,6 +71,7 @@ func TestReaderFrom(t *testing.T) {
 		filename string
 		impl     string
 	}{
+		{"bulder", "", "bulder"},
 		{"dnb", "", "dnb"},
 		{"csv", "", "default"},
 		{"norwegian", "", "norwegian"},
@@ -87,6 +89,10 @@ func TestReaderFrom(t *testing.T) {
 		case "default":
 			if _, ok := rr.(record.Reader); !ok {
 				t.Errorf("#%d: want record.Reader, got %T", i, rr)
+			}
+		case "bulder":
+			if _, ok := rr.(*bulder.Reader); !ok {
+				t.Errorf("#%d: want bulder.Reader, got %T", i, rr)
 			}
 		case "dnb":
 			if _, ok := rr.(*dnb.Reader); !ok {

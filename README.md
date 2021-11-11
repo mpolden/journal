@@ -6,8 +6,12 @@
 
 ## Features
 
-* Import financial records from multiple Norwegian banks, such as Eika Group
-(most local banks), DNB, Storebrand, Bank Norwegian and Komplett Bank.
+* Import financial records from multiple Norwegian banks:
+  * Bank Norwegian (XLS)
+  * Bulder Bank (custom CSV)
+  * DNB (XLS)
+  * Eika Group (most local banks), Storebrand and many others (standard CSV)
+  * Komplett Bank (JSON)
 * Identify spending habits using automatic grouping of records.
 * Define budgets for record groups.
 * Export record groups for further processing in other programs.

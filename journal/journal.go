@@ -14,6 +14,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/mpolden/journal/record"
+	"github.com/mpolden/journal/record/bulder"
 	"github.com/mpolden/journal/record/dnb"
 	"github.com/mpolden/journal/record/komplett"
 	"github.com/mpolden/journal/record/norwegian"
@@ -110,6 +111,8 @@ func readConfig(r io.Reader) (Config, error) {
 func readerFrom(r io.Reader, name, filename string) (record.Reader, error) {
 	var rr record.Reader
 	switch name {
+	case "bulder":
+		rr = bulder.NewReader(r)
 	case "dnb":
 		rr = dnb.NewReader(r)
 	case "csv":
