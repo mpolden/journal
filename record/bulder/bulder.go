@@ -66,8 +66,23 @@ func (r *Reader) Read() ([]record.Record, error) {
 				return nil, fmt.Errorf("invalid balance on line %d: %q: %w", line, balanceValue, err)
 			}
 		}
-		text := csvRecord[9]
-		rs = append(rs, record.Record{Time: t, Text: text, Amount: amount, Balance: balance})
+		var text strings.Builder
+		paymentType := csvRecord[8]
+		paymentText := csvRecord[9]
+		text.WriteString(paymentType)
+		text.WriteString(",")
+		text.WriteString(paymentText)
+		category := csvRecord[10]
+		subCategory := csvRecord[11]
+		if category != "" {
+			text.WriteString(",")
+			text.WriteString(category)
+		}
+		if subCategory != "" {
+			text.WriteString(",")
+			text.WriteString(subCategory)
+		}
+		rs = append(rs, record.Record{Time: t, Text: text.String(), Amount: amount, Balance: balance})
 	}
 	return rs, nil
 }

@@ -12,8 +12,8 @@ func date(year int, month time.Month, day int) time.Time {
 
 func TestRead(t *testing.T) {
 	in := `Dato;Inn på konto;Ut fra konto;Balanse;Til konto;Til kontonummer;Fra konto;Fra kontonummer;Type;Tekst/KID;Hovedkategori;Underkategori
-2021-11-10;2000,00;;2000,00;min konto;mitt kontonr;annen konto;annet kontonr;;Gave;;
-2021-11-15;;-1000,00;1000,00;annen konto;annet kontonr;min konto;mitt kontonr;;Butikk 1;;
+2021-11-10;2000,00;;2000,00;min konto;mitt kontonr;annen konto;annet kontonr;Betaling;Gave;;
+2021-11-15;;-1000,00;1000,00;annen konto;annet kontonr;min konto;mitt kontonr;Betaling;Butikk 1;Mat og drikke;Dagligvarer
 `
 	r := NewReader(strings.NewReader(in))
 	rs, err := r.Read()
@@ -27,8 +27,8 @@ func TestRead(t *testing.T) {
 		amount  int64
 		balance int64
 	}{
-		{date(2021, 11, 10), "Gave", 200000, 200000},
-		{date(2021, 11, 15), "Butikk 1", -100000, 100000},
+		{date(2021, 11, 10), "Betaling,Gave", 200000, 200000},
+		{date(2021, 11, 15), "Betaling,Butikk 1,Mat og drikke,Dagligvarer", -100000, 100000},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))
