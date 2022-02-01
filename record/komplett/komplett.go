@@ -32,6 +32,7 @@ type jsonRecord struct {
 	Amount2 jsonAmount `json:"FormattedAmount"`
 	Text1   string     `json:"DisplayDescription"`
 	Text2   string     `json:"MerchantName"`
+	Text3   string     `json:"Description"`
 }
 
 func (t *jsonTime) UnmarshalJSON(data []byte) error {
@@ -90,6 +91,9 @@ func (r *Reader) Read() ([]record.Record, error) {
 		text := jr.Text1
 		if text == "" {
 			text = jr.Text2
+		}
+		if text == "" {
+			text = jr.Text3
 		}
 		rs = append(rs, record.Record{
 			Time:   txTime,

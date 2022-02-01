@@ -80,5 +80,27 @@
     "TransactionRef": "ref",
     "TransactionDate": "01.02.2022",
     "TransactionDateRaw": "2/1/2022"
+  },
+  {
+    "TransactionId": "42",
+    "TransactionType": 79,
+    "IsReserved": true,
+    "DeferPaymentUrl": null,
+    "IsDeferred": false,
+    "CanDefer": false,
+    "BookingDate": null,
+    "RecipientAccountNr": null,
+    "ExchangeRate": null,
+    "DeferTransactionInfo": null,
+    "OriginalTransactionInfo": null,
+    "Amount": "1337,01 NOK",
+    "AmountCurrency": "NOK",
+    "BillingAmount": "-kr 1337,01",
+    "BillingAmountCurrency": "NOK",
+    "MerchantName": null,
+    "Description": "Varekjøp 3",
+    "TransactionRef": "ref",
+    "TransactionDate": "15.01.2022",
+    "TransactionDateRaw": "1/15/2022"
   }
 ]
