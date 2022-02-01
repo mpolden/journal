@@ -58,5 +58,27 @@
     "FormattedAmount": "kr -53,70",
     "FormattedPostingDate": "28.12.2020",
     "FormattedDefermentExpiryDate": null
+  },
+  {
+    "TransactionId": "42",
+    "TransactionType": 79,
+    "IsReserved": true,
+    "DeferPaymentUrl": null,
+    "IsDeferred": false,
+    "CanDefer": false,
+    "BookingDate": null,
+    "RecipientAccountNr": null,
+    "ExchangeRate": null,
+    "DeferTransactionInfo": null,
+    "OriginalTransactionInfo": null,
+    "Amount": "296,01 NOK",
+    "AmountCurrency": "NOK",
+    "BillingAmount": "-kr 296,01",
+    "BillingAmountCurrency": "NOK",
+    "MerchantName": "Varekjøp 2",
+    "Description": null,
+    "TransactionRef": "ref",
+    "TransactionDate": "01.02.2022",
+    "TransactionDateRaw": "2/1/2022"
   }
 ]

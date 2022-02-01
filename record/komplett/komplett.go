@@ -3,35 +3,35 @@ package komplett
 import (
 	"encoding/json"
 	"io"
+	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/mpolden/journal/record"
 )
 
-const (
-	decimalSeparator  = "."
-	thousandSeparator = " "
-	timeLayout        = "02.01.2006"
+const timeLayout = "02.01.2006"
+
+var (
+	separatorPattern = regexp.MustCompile("[.,]")
+	cleanPattern     = regexp.MustCompile(`kr|NOK|"|\s+|\p{Z}+`)
 )
 
 // Reader implements a reader for Komplett-encoded (JSON) records.
-type Reader struct {
-	rd       io.Reader
-	replacer *strings.Replacer
-}
+type Reader struct{ rd io.Reader }
 
 type jsonTime time.Time
 
 type jsonAmount int64
 
 type jsonRecord struct {
-	Time            jsonTime   `json:"FormattedPostingDate"`
-	BillingAmount   jsonAmount `json:"BillingAmount"`
-	Amount          jsonAmount `json:"Amount"`
-	FormattedAmount string     `json:"FormattedAmount"`
-	Text            string     `json:"DisplayDescription"`
+	// The JSON from their API keeps shuffling field names. Each number corresponds to a version of the format
+	Time1   jsonTime   `json:"FormattedPostingDate"`
+	Time2   jsonTime   `json:"TransactionDate"`
+	Amount1 jsonAmount `json:"BillingAmount"`
+	Amount2 jsonAmount `json:"FormattedAmount"`
+	Text1   string     `json:"DisplayDescription"`
+	Text2   string     `json:"MerchantName"`
 }
 
 func (t *jsonTime) UnmarshalJSON(data []byte) error {
@@ -48,17 +48,18 @@ func (t *jsonTime) UnmarshalJSON(data []byte) error {
 }
 
 func (a *jsonAmount) UnmarshalJSON(data []byte) error {
-	parts := strings.Split(string(data), decimalSeparator)
-	s := parts[0]
+	text := cleanPattern.ReplaceAllString(string(data), "")
+	parts := separatorPattern.Split(text, -1)
+	firstPart := parts[0]
 	if len(parts) == 2 {
-		s += parts[1]
+		firstPart += parts[1]
 		if len(parts[1]) == 1 {
-			s += "0"
+			firstPart += "0"
 		}
 	} else {
-		s += "00"
+		firstPart += "00"
 	}
-	n, err := strconv.ParseInt(s, 10, 64)
+	n, err := strconv.ParseInt(firstPart, 10, 64)
 	if err != nil {
 		return err
 	}
@@ -68,10 +69,7 @@ func (a *jsonAmount) UnmarshalJSON(data []byte) error {
 
 // NewReader returns a new reader for Komplett-encoded records.
 func NewReader(rd io.Reader) *Reader {
-	return &Reader{
-		rd:       rd,
-		replacer: strings.NewReplacer(decimalSeparator, "", thousandSeparator, ""),
-	}
+	return &Reader{rd: rd}
 }
 
 func (r *Reader) Read() ([]record.Record, error) {
@@ -81,25 +79,21 @@ func (r *Reader) Read() ([]record.Record, error) {
 	}
 	var rs []record.Record
 	for _, jr := range jrs {
-		amount := jr.BillingAmount
-		if amount == 0 { // New format
-			var b strings.Builder
-			for _, r := range jr.FormattedAmount {
-				if r == '-' {
-					b.WriteRune(r)
-				} else if r >= '0' && r <= '9' {
-					b.WriteRune(r)
-				}
-			}
-			if n, err := strconv.ParseInt(b.String(), 10, 64); err == nil {
-				amount = jsonAmount(n)
-			} else {
-				return nil, err
-			}
+		amount := jr.Amount1
+		if amount == 0 {
+			amount = jr.Amount2
+		}
+		txTime := time.Time(jr.Time1)
+		if txTime.IsZero() {
+			txTime = time.Time(jr.Time2)
+		}
+		text := jr.Text1
+		if text == "" {
+			text = jr.Text2
 		}
 		rs = append(rs, record.Record{
-			Time:   time.Time(jr.Time),
-			Text:   jr.Text,
+			Time:   txTime,
+			Text:   text,
 			Amount: int64(amount),
 		})
 	}
