@@ -26,13 +26,14 @@ type jsonAmount int64
 
 type jsonRecord struct {
 	// The JSON from their API keeps shuffling field names. Each number corresponds to a version of the format
-	Time1   jsonTime   `json:"FormattedPostingDate"`
-	Time2   jsonTime   `json:"TransactionDate"`
-	Amount1 jsonAmount `json:"BillingAmount"`
-	Amount2 jsonAmount `json:"FormattedAmount"`
-	Text1   string     `json:"DisplayDescription"`
-	Text2   string     `json:"MerchantName"`
-	Text3   string     `json:"Description"`
+	IsReserved bool       `json:"IsReserved"`
+	Time1      jsonTime   `json:"FormattedPostingDate"`
+	Time2      jsonTime   `json:"TransactionDate"`
+	Amount1    jsonAmount `json:"BillingAmount"`
+	Amount2    jsonAmount `json:"FormattedAmount"`
+	Text1      string     `json:"DisplayDescription"`
+	Text2      string     `json:"MerchantName"`
+	Text3      string     `json:"Description"`
 }
 
 func (t *jsonTime) UnmarshalJSON(data []byte) error {
@@ -80,6 +81,9 @@ func (r *Reader) Read() ([]record.Record, error) {
 	}
 	var rs []record.Record
 	for _, jr := range jrs {
+		if jr.IsReserved {
+			continue
+		}
 		amount := jr.Amount1
 		if amount == 0 {
 			amount = jr.Amount2
