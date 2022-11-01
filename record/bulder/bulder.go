@@ -31,6 +31,7 @@ func (r *Reader) Read() ([]record.Record, error) {
 	c.Comma = ';'
 	var rs []record.Record
 	line := 0
+	oldFormat := false
 	for {
 		csvRecord, err := c.Read()
 		if err == io.EOF {
@@ -40,11 +41,12 @@ func (r *Reader) Read() ([]record.Record, error) {
 			return nil, err
 		}
 		line++
-		if line == 1 {
-			continue // Skip header
-		}
 		if len(csvRecord) < 12 {
 			continue
+		}
+		if line == 1 {
+			oldFormat = csvRecord[3] == "Balanse"
+			continue // Skip header
 		}
 		t, err := time.Parse("2006-01-02", csvRecord[0])
 		if err != nil {
@@ -59,16 +61,19 @@ func (r *Reader) Read() ([]record.Record, error) {
 			return nil, fmt.Errorf("invalid amount on line %d: %q: %w", line, amountValue, err)
 		}
 		var balance int64
-		balanceValue := csvRecord[3]
-		if balanceValue != "" {
+		if balanceValue := csvRecord[3]; oldFormat && balanceValue != "" {
 			balance, err = parseAmount(balanceValue)
 			if err != nil {
 				return nil, fmt.Errorf("invalid balance on line %d: %q: %w", line, balanceValue, err)
 			}
 		}
+		indexOffset := 0
+		if oldFormat {
+			indexOffset = 1
+		}
 		var text strings.Builder
-		paymentType := csvRecord[8]
-		paymentText := csvRecord[9]
+		paymentType := csvRecord[7+indexOffset]
+		paymentText := csvRecord[8+indexOffset]
 		text.WriteString(paymentType)
 		text.WriteString(",")
 		text.WriteString(paymentText)
