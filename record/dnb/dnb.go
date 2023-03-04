@@ -59,7 +59,7 @@ func (r *Reader) Read() ([]record.Record, error) {
 		return nil, fmt.Errorf("xlsx contains 0 sheets")
 	}
 	firstSheet := data.GetSheetName(0)
-	rows, err := data.GetRows(firstSheet)
+	rows, err := data.GetRows(firstSheet, excelize.Options{RawCellValue: true})
 	if err != nil {
 		return nil, err
 	}
@@ -74,10 +74,15 @@ func (r *Reader) Read() ([]record.Record, error) {
 		if cells[0] == "" { // Missing date
 			continue
 		}
-		time, err := time.Parse("02.01.2006", cells[0])
+		excelTime, err := strconv.ParseFloat(cells[0], 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid date: %q: %w", cells[0], err)
+			return nil, fmt.Errorf("invalid time value: %q: %w", cells[0], err)
 		}
+		recordTime, err := excelize.ExcelDateToTime(excelTime, false)
+		if err != nil {
+			return nil, fmt.Errorf("invalid date: %f: %w", excelTime, err)
+		}
+		recordTime = recordTime.Truncate(24 * time.Hour)
 		amountIn, err := r.parseAmount(cells[4])
 		if err != nil {
 			return nil, fmt.Errorf("invalid amount: %q: %w", cells[4], err)
@@ -88,7 +93,7 @@ func (r *Reader) Read() ([]record.Record, error) {
 		}
 		amount := amountIn - amountOut
 		r := record.Record{
-			Time:   time,
+			Time:   recordTime,
 			Text:   cells[1],
 			Amount: amount,
 		}
