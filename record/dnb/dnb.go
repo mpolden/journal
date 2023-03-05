@@ -50,6 +50,19 @@ func (r *Reader) parseAmount(s string) (int64, error) {
 	return n, nil
 }
 
+func parseExcelDate(s string) (time.Time, error) {
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid time value: %q: %w", s, err)
+	}
+	t, err := excelize.ExcelDateToTime(f, false)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid date: %f: %w", f, err)
+	}
+	// Time resolution is days, but time zone conversion may add offset
+	return t.Truncate(24 * time.Hour), nil
+}
+
 func (r *Reader) Read() ([]record.Record, error) {
 	data, err := excelize.OpenReader(r.rd)
 	if err != nil {
@@ -74,15 +87,10 @@ func (r *Reader) Read() ([]record.Record, error) {
 		if cells[0] == "" { // Missing date
 			continue
 		}
-		excelTime, err := strconv.ParseFloat(cells[0], 64)
+		recordTime, err := parseExcelDate(cells[0])
 		if err != nil {
-			return nil, fmt.Errorf("invalid time value: %q: %w", cells[0], err)
+			return nil, err
 		}
-		recordTime, err := excelize.ExcelDateToTime(excelTime, false)
-		if err != nil {
-			return nil, fmt.Errorf("invalid date: %f: %w", excelTime, err)
-		}
-		recordTime = recordTime.Truncate(24 * time.Hour)
 		amountIn, err := r.parseAmount(cells[4])
 		if err != nil {
 			return nil, fmt.Errorf("invalid amount: %q: %w", cells[4], err)
