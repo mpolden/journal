@@ -2,7 +2,7 @@ XGOARCH := amd64
 XGOOS := linux
 XBIN := $(XGOOS)_$(XGOARCH)/journal
 
-all: lint test install
+all: checkfmt vet test install
 
 test:
 	go test ./...
@@ -10,10 +10,11 @@ test:
 vet:
 	go vet ./...
 
-fmt:
-	bash -c "diff --line-format='%L' <(echo -n) <(gofmt -d -s .)"
+checkfmt:
+	@sh -c "test -z $$(gofmt -l .)" || { echo "one or more files need to be formatted: try make fmt to fix this automatically"; exit 1; }
 
-lint: fmt vet
+fmt:
+	gofmt -w .
 
 install:
 	go install ./...
