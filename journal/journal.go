@@ -17,6 +17,7 @@ import (
 	"github.com/mpolden/journal/record/bulder"
 	"github.com/mpolden/journal/record/dnb"
 	"github.com/mpolden/journal/record/komplett"
+	"github.com/mpolden/journal/record/morrow"
 	"github.com/mpolden/journal/record/norwegian"
 	"github.com/mpolden/journal/sql"
 )
@@ -119,6 +120,8 @@ func readerFrom(r io.Reader, name, filename string) (record.Reader, error) {
 		rr = record.NewReader(r)
 	case "komplett":
 		rr = komplett.NewReader(r)
+	case "morrow":
+		rr = morrow.NewReader(r)
 	case "norwegian":
 		rr = norwegian.NewReader(r)
 	case "auto":
