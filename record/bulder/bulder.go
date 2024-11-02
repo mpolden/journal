@@ -12,6 +12,28 @@ import (
 	"github.com/mpolden/journal/record"
 )
 
+const (
+	balanceField     = "Balanse"
+	categoryField    = "Hovedkategori"
+	dateField        = "Dato"
+	inflowField      = "Inn på konto"
+	outflowField     = "Ut fra konto"
+	subCategoryField = "Underkategori"
+	textField        = "Tekst"
+	textFieldLegacy  = "Tekst/KID"
+	typeField        = "Type"
+)
+
+var requiredFields = []string{
+	categoryField,
+	dateField,
+	inflowField,
+	outflowField,
+	subCategoryField,
+	textField,
+	typeField,
+}
+
 // Reader implements a reader for Bulder-encoded (CSV) records.
 type Reader struct {
 	rd io.Reader
@@ -31,17 +53,9 @@ func (r *Reader) Read() ([]record.Record, error) {
 	c.Comma = ';'
 	var rs []record.Record
 	line := 0
-	var (
-		balanceIndex      = -1
-		mainCategoryIndex = -1
-		subCategoryIndex  = -1
-		textIndex         = -1
-		amountInIndex     = -1
-		amountOutIndex    = -1
-		typeIndex         = -1
-	)
+	indices := map[string]int{}
 	for {
-		csvRecord, err := c.Read()
+		cr, err := c.Read()
 		if err == io.EOF {
 			break
 		}
@@ -49,38 +63,33 @@ func (r *Reader) Read() ([]record.Record, error) {
 			return nil, err
 		}
 		line++
-		if len(csvRecord) < 10 {
+		if len(cr) < 10 {
 			continue
 		}
+		// Determine field index from header
 		if line == 1 {
-			for i, field := range csvRecord {
-				switch field {
-				case "Balanse":
-					balanceIndex = i
-				case "Hovedkategori":
-					mainCategoryIndex = i
-				case "Underkategori":
-					subCategoryIndex = i
-				case "Type":
-					typeIndex = i
-				case "Tekst", "Tekst/KID":
-					textIndex = i
-				case "Inn på konto":
-					amountInIndex = i
-				case "Ut fra konto":
-					amountOutIndex = i
+			for i, field := range cr {
+				if field == textFieldLegacy {
+					field = textField
+				}
+				indices[field] = i
+			}
+			for _, field := range requiredFields {
+				if _, ok := indices[field]; !ok {
+					return nil, fmt.Errorf("required field %q not found in header", field)
 				}
 			}
-			continue // Skip header
+			continue
 		}
-		t, err := time.Parse("2006-01-02", csvRecord[0])
+		date := cr[indices[dateField]]
+		t, err := time.Parse("2006-01-02", date)
 		if err != nil {
-			return nil, fmt.Errorf("invalid time on line %d: %q: %w", line, csvRecord[0], err)
+			return nil, fmt.Errorf("invalid time on line %d: %q: %w", line, date, err)
 		}
 		amountValue := ""
-		if amountIn := csvRecord[amountInIndex]; amountIn != "" {
+		if amountIn := cr[indices[inflowField]]; amountIn != "" {
 			amountValue = amountIn
-		} else if amountOut := csvRecord[amountOutIndex]; amountOut != "" {
+		} else if amountOut := cr[indices[outflowField]]; amountOut != "" {
 			amountValue = amountOut
 		}
 		amount, err := parseAmount(amountValue)
@@ -88,23 +97,23 @@ func (r *Reader) Read() ([]record.Record, error) {
 			return nil, fmt.Errorf("invalid amount on line %d: %q: %w", line, amountValue, err)
 		}
 		var balance int64
-		if balanceIndex > -1 {
-			v := csvRecord[balanceIndex]
-			balance, err = parseAmount(v)
+		if i, ok := indices[balanceField]; ok {
+			v := cr[i]
+			balance, err = parseAmount(cr[i])
 			if err != nil {
 				return nil, fmt.Errorf("invalid balance on line %d: %q: %w", line, v, err)
 			}
 		}
 		var text strings.Builder
-		paymentType := csvRecord[typeIndex]
-		paymentText := csvRecord[textIndex]
+		paymentType := cr[indices[typeField]]
+		paymentText := cr[indices[textField]]
 		text.WriteString(paymentType)
 		if paymentText != "" {
 			text.WriteString(",")
 			text.WriteString(paymentText)
 		}
-		category := csvRecord[mainCategoryIndex]
-		subCategory := csvRecord[subCategoryIndex]
+		category := cr[indices[categoryField]]
+		subCategory := cr[indices[subCategoryField]]
 		if category != "" {
 			text.WriteString(",")
 			text.WriteString(category)
