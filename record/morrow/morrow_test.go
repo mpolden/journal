@@ -41,7 +41,7 @@ func TestRead(t *testing.T) {
 		amount int64
 	}{
 		{date(2023, 10, 31), "Rema 1000", -15055},
-		{date(2023, 10, 15), "Lønn", 750000},
+		{time.Date(2023, 10, 15, 17, 4, 32, 0, time.UTC), "Lønn", 750000},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))

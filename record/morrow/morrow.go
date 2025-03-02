@@ -46,9 +46,13 @@ func (r *Reader) Read() ([]record.Record, error) {
 		if line == 1 {
 			continue // Skip header
 		}
-		t, err := time.Parse("02.01.2006", csvRecord[0])
+		t, err := time.Parse("02.01.2006 15:04:05", csvRecord[0])
 		if err != nil {
-			return nil, fmt.Errorf("invalid time on line %d: %q: %w", line, csvRecord[0], err)
+			// Try old format
+			t, err = time.Parse("02.01.2006", csvRecord[0])
+			if err != nil {
+				return nil, fmt.Errorf("invalid time on line %d: %q: %w", line, csvRecord[0], err)
+			}
 		}
 		amount, err := parseAmount(csvRecord[5])
 		if err != nil {
