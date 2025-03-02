@@ -117,7 +117,7 @@ SELECT number, name, COUNT(record.id) AS records
 FROM account
 LEFT JOIN record ON account.id = record.account_id
 `
-	args := []interface{}{}
+	args := []any{}
 	if accountNumber != "" {
 		query += " WHERE number = ?"
 		args = append(args, accountNumber)
@@ -188,7 +188,7 @@ SELECT name, number, time, text, amount, balance
 FROM record
 INNER JOIN account ON account_id = account.id
 `
-	args := []interface{}{}
+	args := []any{}
 	if accountNumber != "" {
 		query += " WHERE number = ?"
 		args = append(args, accountNumber)

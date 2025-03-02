@@ -50,7 +50,7 @@ func testFiles(t *testing.T) files {
 	confName := filepath.Join(tempDir, "conf")
 	dataName := filepath.Join(tempDir, "data")
 
-	if err := ioutil.WriteFile(confName, []byte(fmt.Sprintf(conf, dbName)), 0644); err != nil {
+	if err := ioutil.WriteFile(confName, fmt.Appendf(nil, conf, dbName), 0644); err != nil {
 		t.Fatal(err)
 	}
 
