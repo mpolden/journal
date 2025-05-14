@@ -10,3 +10,5 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "github.com/olekukonko/tablewriter"
