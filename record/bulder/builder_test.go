@@ -129,3 +129,43 @@ func TestRead3(t *testing.T) {
 		}
 	}
 }
+
+func TestRead4(t *testing.T) {
+	// Have you heard of APIs?
+	in := `
+Dato;Beløp;Originalt Beløp;Original Valuta;Til konto;Til kontonummer;Fra konto;Fra kontonummer;Type;Tekst;KID;Hovedkategori;Underkategori
+2025-07-01;199,00;199,00;NOK;Min konto;4242.42.42424;;4141.41.41414;Betaling;Fra: Mysil Bergsprekken;;Diverse;Vipps
+`
+	r := NewReader(strings.NewReader(in))
+	rs, err := r.Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var tests = []struct {
+		t       time.Time
+		text    string
+		amount  int64
+		balance int64
+	}{
+		{date(2025, 7, 1), "Betaling,Fra: Mysil Bergsprekken,Diverse,Vipps", 19900, 0},
+	}
+	if len(rs) != len(tests) {
+		t.Fatalf("want %d records, got %d", len(tests), len(rs))
+	}
+
+	for i, tt := range tests {
+		if !rs[i].Time.Equal(tt.t) {
+			t.Errorf("#%d: want Time = %s, got %s", i, tt.t, rs[i].Time)
+		}
+		if rs[i].Text != tt.text {
+			t.Errorf("#%d: want Text = %q, got %q", i, tt.text, rs[i].Text)
+		}
+		if rs[i].Amount != tt.amount {
+			t.Errorf("#%d: want Amount = %d, got %d", i, tt.amount, rs[i].Amount)
+		}
+		if rs[i].Balance != tt.balance {
+			t.Errorf("#%d: want Balance = %d, got %d", i, tt.balance, rs[i].Balance)
+		}
+	}
+}

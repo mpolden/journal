@@ -16,6 +16,7 @@ const (
 	balanceField     = "Balanse"
 	categoryField    = "Hovedkategori"
 	dateField        = "Dato"
+	amountField      = "Beløp"
 	inflowField      = "Inn på konto"
 	outflowField     = "Ut fra konto"
 	subCategoryField = "Underkategori"
@@ -27,8 +28,6 @@ const (
 var requiredFields = []string{
 	categoryField,
 	dateField,
-	inflowField,
-	outflowField,
 	subCategoryField,
 	textField,
 	typeField,
@@ -44,6 +43,20 @@ func NewReader(rd io.Reader) *Reader {
 	return &Reader{
 		rd: rd,
 	}
+}
+
+func findAmount(indices map[string]int, record []string) (string, error) {
+	for _, field := range []string{amountField, inflowField, outflowField} {
+		i, ok := indices[field]
+		if !ok {
+			continue
+		}
+		if record[i] == "" {
+			continue
+		}
+		return record[i], nil
+	}
+	return "", fmt.Errorf("no amount field found")
 }
 
 // Read all records from the underlying reader.
@@ -86,11 +99,9 @@ func (r *Reader) Read() ([]record.Record, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid time on line %d: %q: %w", line, date, err)
 		}
-		amountValue := ""
-		if amountIn := cr[indices[inflowField]]; amountIn != "" {
-			amountValue = amountIn
-		} else if amountOut := cr[indices[outflowField]]; amountOut != "" {
-			amountValue = amountOut
+		amountValue, err := findAmount(indices, cr)
+		if err != nil {
+			return nil, fmt.Errorf("no amount on line %d: %w", line, err)
 		}
 		amount, err := parseAmount(amountValue)
 		if err != nil {
