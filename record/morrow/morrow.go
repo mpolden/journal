@@ -56,7 +56,7 @@ func (r *Reader) Read() ([]record.Record, error) {
 		}
 		amount, err := parseAmount(csvRecord[5])
 		if err != nil {
-			return nil, fmt.Errorf("invalid amount on line %d: %q: %w", line, amount, err)
+			return nil, fmt.Errorf("invalid amount on line %d: %q: %w", line, csvRecord[5], err)
 		}
 		text := strings.TrimSpace(csvRecord[2])
 		rs = append(rs, record.Record{Time: t, Text: text, Amount: amount})
@@ -65,7 +65,9 @@ func (r *Reader) Read() ([]record.Record, error) {
 }
 
 func parseAmount(s string) (int64, error) {
-	v := strings.ReplaceAll(s, ".", "")
+	// \u2212 is unicode minus
+	replacer := strings.NewReplacer(".", "", ",", "", "\u2212", "-")
+	v := replacer.Replace(s)
 	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
 		return 0, err
