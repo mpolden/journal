@@ -116,23 +116,25 @@ func (r *Reader) Read() ([]record.Record, error) {
 			}
 		}
 		var text strings.Builder
-		paymentType := cr[indices[typeField]]
-		paymentText := cr[indices[textField]]
-		text.WriteString(paymentType)
-		if paymentText != "" {
-			text.WriteString(",")
-			text.WriteString(paymentText)
+		appendText := func(s string) {
+			if s == "" {
+				return
+			}
+			if text.Len() > 0 {
+				text.WriteString(",")
+			}
+			text.WriteString(s)
 		}
+		paymentType := cr[indices[typeField]]
+		if paymentType != "Betaling" {
+			appendText(paymentType)
+		}
+		paymentText := cr[indices[textField]]
+		appendText(paymentText)
 		category := cr[indices[categoryField]]
 		subCategory := cr[indices[subCategoryField]]
-		if category != "" {
-			text.WriteString(",")
-			text.WriteString(category)
-		}
-		if subCategory != "" {
-			text.WriteString(",")
-			text.WriteString(subCategory)
-		}
+		appendText(category)
+		appendText(subCategory)
 		rs = append(rs, record.Record{Time: t, Text: text.String(), Amount: amount, Balance: balance})
 	}
 	return rs, nil

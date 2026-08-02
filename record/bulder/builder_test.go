@@ -27,8 +27,8 @@ func TestRead(t *testing.T) {
 		amount  int64
 		balance int64
 	}{
-		{date(2021, 11, 10), "Betaling,Gave", 200000, 200000},
-		{date(2021, 11, 15), "Betaling,Butikk 1,Mat og drikke,Dagligvarer", -100000, 100000},
+		{date(2021, 11, 10), "Gave", 200000, 200000},
+		{date(2021, 11, 15), "Butikk 1,Mat og drikke,Dagligvarer", -100000, 100000},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))
@@ -68,8 +68,8 @@ func TestRead2(t *testing.T) {
 		amount  int64
 		balance int64
 	}{
-		{date(2022, 10, 25), "Betaling,Vare 1,kategori 1,underkategori 1", -105000, 0},
-		{date(2022, 10, 25), "Betaling,Nedbetaling Lån,Hus og hjem,Lån", -250000, 0},
+		{date(2022, 10, 25), "Vare 1,kategori 1,underkategori 1", -105000, 0},
+		{date(2022, 10, 25), "Nedbetaling Lån,Hus og hjem,Lån", -250000, 0},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))
@@ -108,7 +108,7 @@ func TestRead3(t *testing.T) {
 		amount  int64
 		balance int64
 	}{
-		{date(2024, 10, 07), "Betaling,Bil,Billån", -1000000, 0},
+		{date(2024, 10, 07), "Bil,Billån", -1000000, 0},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))
@@ -135,6 +135,7 @@ func TestRead4(t *testing.T) {
 	in := `
 Dato;Beløp;Originalt Beløp;Original Valuta;Til konto;Til kontonummer;Fra konto;Fra kontonummer;Type;Tekst;KID;Hovedkategori;Underkategori
 2025-07-01;199,00;199,00;NOK;Min konto;4242.42.42424;;4141.41.41414;Betaling;Fra: Mysil Bergsprekken;;Diverse;Vipps
+2025-07-02;299,00;299,00;NOK;Min konto;4242.42.42424;;4141.41.41414;Efaktura;Forsikring;;Hus og hjem;Forsikring
 `
 	r := NewReader(strings.NewReader(in))
 	rs, err := r.Read()
@@ -148,7 +149,8 @@ Dato;Beløp;Originalt Beløp;Original Valuta;Til konto;Til kontonummer;Fra konto
 		amount  int64
 		balance int64
 	}{
-		{date(2025, 7, 1), "Betaling,Fra: Mysil Bergsprekken,Diverse,Vipps", 19900, 0},
+		{date(2025, 7, 1), "Fra: Mysil Bergsprekken,Diverse,Vipps", 19900, 0},
+		{date(2025, 7, 2), "Efaktura,Forsikring,Hus og hjem,Forsikring", 29900, 0},
 	}
 	if len(rs) != len(tests) {
 		t.Fatalf("want %d records, got %d", len(tests), len(rs))
