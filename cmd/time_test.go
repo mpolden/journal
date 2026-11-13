@@ -48,7 +48,7 @@ func TestMonthRange(t *testing.T) {
 	for i, tt := range tests {
 		s, u, err := testClock.monthRange(tt.in)
 		if tt.err == (err == nil) {
-			t.Errorf("#%d: got unexpected error for %q: %s", i, tt.in, err)
+			t.Errorf("#%d: got unexpected error for %d: %s", i, tt.in, err)
 		}
 		if !tt.s.Equal(s) {
 			t.Errorf("#%d: got s=%s, want %s", i, s, tt.s)
